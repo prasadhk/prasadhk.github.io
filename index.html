@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroMix Pro India — Fertilizer Mixing & Elemental Dosage Calculator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Font Awesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+  <header class="bg-emerald-950 text-white shadow-md sticky top-0 z-30 no-print border-b border-emerald-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-800/90 border border-emerald-600/50 flex items-center justify-center text-emerald-300 text-xl shadow-inner">
+          <i class="fa-solid fa-seedling"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight flex items-center gap-2">
+            AgroMix Pro <span class="bg-emerald-800 text-emerald-200 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-600/50">India Fertilizer &amp; Orchard Edition</span>
+          </h1>
+          <p class="text-xs text-emerald-300/80">Batch Mix Proportion, Single Dose (1 Apply) &amp; 10-Nutrient Elemental Profiler</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="download-csv-btn" title="Download formulation as CSV" class="text-xs sm:text-sm bg-emerald-900 hover:bg-emerald-800 active:scale-95 text-emerald-100 font-medium px-3 py-1.5 rounded-lg border border-emerald-700 transition flex items-center gap-1.5 shadow-xs">
+          <i class="fa-solid fa-file-csv"></i>
+          <span class="hidden sm:inline">Export CSV</span>
+        </button>
+        <button id="print-btn" class="text-xs sm:text-sm bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5 shadow-xs">
+          <i class="fa-solid fa-print"></i>
+          <span class="hidden sm:inline">Print</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 flex-grow w-full space-y-6">
+
+    <!-- Toast Notification -->
+    <div id="toast-box" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+      <div class="bg-slate-900 text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2.5 border border-slate-700">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toast-msg">Action completed</span>
+      </div>
+    </div>
+
+    <!-- Presets & Quick-Add Bar -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+      
+      <!-- Field Presets -->
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-flask text-emerald-600 text-sm"></i>
+          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Field Presets:</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button id="preset-urea-dap-mop" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-seedling text-emerald-700 text-xs"></i> UREA + DAP + MOP
+          </button>
+          <button id="preset-urea-ssp-mop" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-950 border border-blue-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-wheat-awn text-blue-700 text-xs"></i> UREA + SSP + MOP
+          </button>
+          <button id="preset-as-dap-mop" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-cubes text-amber-700 text-xs"></i> AS + DAP + MOP
+          </button>
+          <button id="preset-micro-booster" class="text-xs bg-cyan-50 hover:bg-cyan-100 text-cyan-950 border border-cyan-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-shield-halved text-xs text-cyan-700"></i> Full Micro Blend
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick-Add Catalog Chips -->
+      <div class="space-y-2.5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-boxes-stacked text-emerald-700"></i>
+              Indian Bulk &amp; Specialty Fertilizer Catalog
+            </h2>
+            <p class="text-[11px] text-slate-500">Tap any fertilizer to add it directly to your formulation (Default batch weights pre-configured):</p>
+          </div>
+          <div class="flex items-center gap-2 self-start md:self-auto bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600">
+            <span class="px-2 text-slate-400">Batch Entry Unit:</span>
+            <button id="unit-btn-kg" class="px-2.5 py-1 rounded-lg bg-emerald-700 text-white shadow-xs transition">kg</button>
+            <button id="unit-btn-g" class="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-200 transition">grams</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1" id="quick-add-pills">
+          <!-- Major Primary NPK Groups -->
+          <div class="bg-slate-50/70 p-2.5 rounded-xl border border-slate-100 flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Major NPK Complexes &amp; Basics</span>
+            <div class="flex flex-wrap gap-1.5">
+              <!-- Bag weight removed from display label for Urea and MOP -->
+              <button data-name="Urea (46-0-0)" data-n="46" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="45kg" data-default="45" class="btn-quick-add text-xs bg-blue-100 hover:bg-blue-200 text-blue-950 border border-blue-300 font-extrabold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Urea (46-0-0)
+              </button>
+              <button data-name="MOP (0-0-60 Potash)" data-n="0" data-p="0" data-k="60" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-rose-100 hover:bg-rose-200 text-rose-950 border border-rose-300 font-extrabold px-2 py-1 rounded-lg transition shadow-2xs">
+                + MOP (0-0-60 Potash)
+              </button>
+              <button data-name="DAP (18-46-0)" data-n="18" data-p="46" data-k="0" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-semibold px-2 py-1 rounded-lg transition shadow-2xs">
+                + DAP (18-46-0)
+              </button>
+              <button data-name="Ammonium Sulfate (20.5-0-0-24S)" data-n="20.5" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="24" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Amm. Sulfate (24S)
+              </button>
+              <button data-name="Complex 10-26-26" data-n="10" data-p="26" data-k="26" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-300 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Complex 10-26-26
+              </button>
+              <button data-name="Areca Mixture (14-6-21)" data-n="14" data-p="6" data-k="21" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Areca Mix (14-6-21)
+              </button>
+              <button data-name="Suphala (15-15-15)" data-n="15" data-p="15" data-k="15" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Suphala 15:15:15
+              </button>
+              <button data-name="Complex 20-20-0-13 (13% S)" data-n="20" data-p="20" data-k="0" data-ca="0" data-mg="0" data-s="13" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold px-2 py-1 rounded-lg transition shadow-2xs">
+                + 20-20-0-13 (13S)
+              </button>
+            </div>
+          </div>
+
+          <!-- Secondary Nutrients (Ca, Mg, S) -->
+          <div class="bg-amber-50/50 p-2.5 rounded-xl border border-amber-100 flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Secondary Nutrients (Ca - Mg - S)</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button data-name="SSP (Single Super Phosphate)" data-n="0" data-p="16" data-k="0" data-ca="21" data-mg="0" data-s="11" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + SSP (16% P, 21% Ca, 11% S)
+              </button>
+              <button data-name="Granulated Dolomite" data-n="0" data-p="0" data-k="0" data-ca="19" data-mg="11" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="25kg" data-default="25" class="btn-quick-add text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-400 font-extrabold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Granulated Dolomite (19Ca:11Mg) [25kg]
+              </button>
+              <button data-name="SPIC Keerthi CMS granules" data-n="0" data-p="0" data-k="0" data-ca="15" data-mg="3" data-s="5" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="50kg" data-default="50" class="btn-quick-add text-xs bg-amber-200 hover:bg-amber-300 text-amber-950 border border-amber-400 font-extrabold px-2 py-1 rounded-lg transition shadow-2xs">
+                + SPIC Keerthi CMS (15Ca:3Mg:5S) [50kg]
+              </button>
+              <!-- Renamed to Magnesium Sulfate -->
+              <button data-name="Magnesium Sulfate" data-n="0" data-p="0" data-k="0" data-ca="0" data-mg="9.6" data-s="12" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="25kg" data-default="25" class="btn-quick-add text-xs bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 font-semibold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Magnesium Sulfate
+              </button>
+              <button data-name="Calcium Nitrate (15.5-0-0 + 18.8 Ca)" data-n="15.5" data-p="0" data-k="0" data-ca="18.8" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="0" data-pack="25kg" data-default="25" class="btn-quick-add text-xs bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 font-semibold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Calcium Nitrate (18.8% Ca)
+              </button>
+            </div>
+          </div>
+
+          <!-- Micronutrients (B - Zn - Fe - Mn) -->
+          <div class="bg-cyan-50/50 p-2.5 rounded-xl border border-cyan-100 flex flex-col gap-1.5">
+            <span class="text-[10px] font-bold text-cyan-800 uppercase tracking-wider">Micronutrients (B - Zn - Fe - Mn)</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button data-name="Borax (10.5% Boron)" data-n="0" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="0" data-b="10.5" data-pack="5kg" data-default="2.5" class="btn-quick-add text-xs bg-lime-100 hover:bg-lime-200 text-lime-950 border border-lime-400 font-extrabold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Borax (10.5% B)
+              </button>
+              <button data-name="Zinc Sulfate (21% Zn)" data-n="0" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="10" data-fe="0" data-mn="0" data-zn="21" data-b="0" data-pack="5kg" data-default="5" class="btn-quick-add text-xs bg-cyan-100 hover:bg-cyan-200 text-cyan-950 border border-cyan-400 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Zinc Sulfate (21% Zn, 10% S)
+              </button>
+              <button data-name="Zinc EDTA (12% Zn)" data-n="0" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="0" data-fe="0" data-mn="0" data-zn="12" data-b="0" data-pack="1kg" data-default="2" class="btn-quick-add text-xs bg-purple-100 hover:bg-purple-200 text-purple-950 border border-purple-300 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Zinc EDTA (12% Zn Chelated)
+              </button>
+              <!-- Renamed to Ferrous Sulfate -->
+              <button data-name="Ferrous Sulfate" data-n="0" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="10.5" data-fe="19" data-mn="0" data-zn="0" data-b="0" data-pack="5kg" data-default="5" class="btn-quick-add text-xs bg-orange-50 hover:bg-orange-100 text-orange-950 border border-orange-300 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Ferrous Sulfate (19% Fe)
+              </button>
+              <!-- Renamed to Manganese Sulfate -->
+              <button data-name="Manganese Sulfate" data-n="0" data-p="0" data-k="0" data-ca="0" data-mg="0" data-s="17" data-fe="0" data-mn="30.5" data-zn="0" data-b="0" data-pack="5kg" data-default="3" class="btn-quick-add text-xs bg-pink-50 hover:bg-pink-100 text-pink-950 border border-pink-300 font-bold px-2 py-1 rounded-lg transition shadow-2xs">
+                + Manganese Sulfate (30.5% Mn)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Formulation Builder & Application Inputs -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <!-- Card: Mixture Formulation -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 print-shadow-none">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-extrabold flex items-center justify-center">1</span>
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">Batch Blend Formulation</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="add-fertilizer-btn" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition">
+                <i class="fa-solid fa-plus text-[10px]"></i> Add Custom Row
+              </button>
+              <button id="clear-all-btn" class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-rose-200 transition" title="Clear all ingredients">
+                <i class="fa-solid fa-rotate-left text-[11px]"></i> Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Table of Ingredients -->
+          <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm min-w-[640px]">
+              <thead>
+                <tr class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 border-y border-slate-200">
+                  <th class="py-2.5 px-3">Fertilizer Name</th>
+                  <th class="py-2.5 px-2 text-center">Active Elemental Profile</th>
+                  <th class="py-2.5 px-3 text-right">Batch Qty (<span class="input-unit-label font-bold text-slate-600">kg</span>)</th>
+                  <th class="py-2.5 px-3 text-right">Blend Share</th>
+                  <th class="py-2.5 px-2 text-center w-8 no-print"></th>
+                </tr>
+              </thead>
+              <tbody id="fertilizer-rows" class="divide-y divide-slate-100">
+                <!-- Dynamically rendered rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total Batch Row -->
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50 px-4 py-3 rounded-xl">
+            <div class="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <span>Total Batch Weight:</span>
+              <span id="items-count-badge" class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-bold">0 items</span>
+            </div>
+            <div class="text-right">
+              <span id="batch-total-weight" class="text-base sm:text-lg font-extrabold text-emerald-800">0.00</span>
+              <span class="input-unit-label text-xs sm:text-sm font-bold text-emerald-800">kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Application Rate & Orchard Size (with Batch Coverage indicator) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 print-shadow-none">
+          <div class="flex items-center space-x-2 pb-3 border-b border-slate-100 mb-4">
+            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-extrabold flex items-center justify-center">2</span>
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base">Dose Specified in 1 Apply &amp; Orchard Size</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Dose per plant -->
+            <div>
+              <label for="dose-amount" class="block text-xs font-semibold text-slate-700 mb-1">
+                Specified Quantity Applied per Tree / Palm:
+              </label>
+              <div class="relative rounded-xl shadow-2xs">
+                <input 
+                  type="number" 
+                  id="dose-amount" 
+                  step="any" 
+                  min="0.01" 
+                  value="500" 
+                  class="w-full pl-3 pr-24 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-base transition"
+                  placeholder="500"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-1.5">
+                  <select id="dose-unit-select" class="h-8 py-0 pl-2 pr-6 border-transparent bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs rounded-lg focus:outline-none cursor-pointer">
+                    <option value="g" selected>grams (g)</option>
+                    <option value="kg">kg</option>
+                  </select>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">E.g., 250 g or 500 g per basin or tree root ring.</p>
+            </div>
+
+            <!-- Total trees -->
+            <div>
+              <label for="plant-count" class="block text-xs font-semibold text-slate-700 mb-1">
+                Total Plants / Trees / Palms in Orchard:
+              </label>
+              <div class="relative rounded-xl shadow-2xs">
+                <input 
+                  type="number" 
+                  id="plant-count" 
+                  min="1" 
+                  step="1" 
+                  value="500" 
+                  class="w-full pl-9 pr-3 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-base transition"
+                  placeholder="500"
+                >
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <i class="fa-solid fa-tree"></i>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Calculates total 50kg, 45kg &amp; 25kg bags needed.</p>
+            </div>
+          </div>
+
+          <!-- Feature: Trees / Palms Covered in 1 Batch Mix Banner -->
+          <div class="mt-4 p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm shadow-xs shrink-0">
+                <i class="fa-solid fa-users-viewfinder"></i>
+              </div>
+              <div>
+                <span class="block text-xs font-extrabold text-emerald-950 uppercase tracking-wider">Coverage in 1 Batch Mix</span>
+                <span class="text-[11px] text-emerald-800">Number of trees / palms covered by mixing this exact batch:</span>
+              </div>
+            </div>
+            <div class="text-right sm:text-right bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shrink-0">
+              <span id="batch-coverage-count" class="text-lg sm:text-xl font-black text-emerald-800">0</span>
+              <span class="text-xs font-extrabold text-emerald-700 ml-1">Trees / Palms</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Compatibility & Field Caution Box -->
+        <div id="compatibility-alert" class="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 flex items-start gap-3">
+          <div class="text-amber-600 mt-0.5 text-base shrink-0">
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+          <div class="space-y-1">
+            <h4 class="font-bold text-amber-950">Agronomy Mixing Guidance &amp; Micronutrient Precautions</h4>
+            <p id="compatibility-text" class="text-[11px] leading-relaxed text-amber-800">
+              When dry mixing fertilizers, prepare the blend on a clean, dry tarpaulin sheet on the day of application.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Results & 10-Nutrient Profile -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- Result 1: In 1 Single Apply Card -->
+        <div class="bg-white rounded-2xl border-2 border-emerald-600 shadow-md p-4 sm:p-5 relative overflow-hidden print-shadow-none">
+          <div class="flex items-center justify-between pb-3 border-b border-emerald-100 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">
+                <i class="fa-solid fa-scale-balanced text-[10px]"></i>
+              </span>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base">In 1 Single Apply (Per Plant)</h3>
+                <p class="text-[11px] text-emerald-800">Exact component weights &amp; pure elemental nutrition</p>
+              </div>
+            </div>
+            <button id="copy-summary-btn" class="no-print text-xs text-emerald-800 hover:text-emerald-900 bg-emerald-100 hover:bg-emerald-200 font-semibold px-2.5 py-1 rounded-lg border border-emerald-300 flex items-center gap-1 transition">
+              <i class="fa-regular fa-copy"></i> Copy
+            </button>
+          </div>
+
+          <!-- Total Target Dose banner -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-3.5 flex items-center justify-between">
+            <span class="text-xs font-semibold text-emerald-900">Total Dose per Plant:</span>
+            <span id="display-single-dose-total" class="font-extrabold text-emerald-900 text-base sm:text-lg">500 g</span>
+          </div>
+
+          <!-- Pure Elemental Delivery Section (Relocated right after Total Dose per Plant) -->
+          <div class="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3.5 mb-4 space-y-3 shadow-2xs">
+            <div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
+              <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-atom text-emerald-600"></i>
+                Pure Elemental Delivery / Plant
+              </span>
+              <span class="text-[10px] text-slate-500 font-semibold">10 Active Pure Elements</span>
+            </div>
+
+            <!-- Group 1: Major Primary Nutrients (N - P2O5 - K2O) -->
+            <div>
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Primary Nutrients</span>
+              <div class="grid grid-cols-3 gap-1.5 text-center text-xs">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                  <span class="block text-[10px] font-bold text-blue-800">Nitrogen (N)</span>
+                  <span id="nutr-n" class="font-extrabold text-blue-950 text-xs sm:text-sm">0.0 g</span>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                  <span class="block text-[10px] font-bold text-amber-800">Phosphorus (P₂O₅)</span>
+                  <span id="nutr-p" class="font-extrabold text-amber-950 text-xs sm:text-sm">0.0 g</span>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                  <span class="block text-[10px] font-bold text-emerald-800">Potash (K₂O)</span>
+                  <span id="nutr-k" class="font-extrabold text-emerald-950 text-xs sm:text-sm">0.0 g</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 2: Secondary Nutrients (Ca - Mg - S) -->
+            <div>
+              <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block mb-1">Secondary Nutrients (Ca • Mg • S)</span>
+              <div class="grid grid-cols-3 gap-1.5 text-center text-xs">
+                <div class="bg-amber-100/60 border border-amber-300 rounded-lg p-2">
+                  <span class="block text-[10px] font-extrabold text-amber-900">Calcium (Ca)</span>
+                  <span id="nutr-ca" class="font-extrabold text-amber-950 text-xs sm:text-sm">0.0 g</span>
+                </div>
+                <div class="bg-teal-50 border border-teal-200 rounded-lg p-2">
+                  <span class="block text-[10px] font-bold text-teal-800">Magnesium (Mg)</span>
+                  <span id="nutr-mg" class="font-extrabold text-teal-950 text-xs sm:text-sm">0.0 g</span>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-2">
+                  <span class="block text-[10px] font-bold text-yellow-800">Sulfur (S)</span>
+                  <span id="nutr-s" class="font-extrabold text-yellow-950 text-xs sm:text-sm">0.0 g</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 3: Micronutrients (B - Fe - Mn - Zn) -->
+            <div>
+              <span class="text-[10px] font-bold text-cyan-800 uppercase tracking-wider block mb-1">Micronutrients (B • Fe • Mn • Zn)</span>
+              <div class="grid grid-cols-4 gap-1.5 text-center text-xs">
+                <div class="bg-lime-50 border-2 border-lime-400 rounded-lg p-2 shadow-2xs">
+                  <span class="block text-[10px] font-black text-lime-900">Boron (B)</span>
+                  <span id="nutr-b" class="font-black text-lime-950 text-xs sm:text-sm">0.00 g</span>
+                </div>
+                <div class="bg-orange-50 border border-orange-300 rounded-lg p-2">
+                  <span class="block text-[10px] font-extrabold text-orange-900">Iron (Fe)</span>
+                  <span id="nutr-fe" class="font-extrabold text-orange-950 text-xs sm:text-sm">0.00 g</span>
+                </div>
+                <div class="bg-pink-50 border border-pink-300 rounded-lg p-2">
+                  <span class="block text-[10px] font-extrabold text-pink-900">Manganese (Mn)</span>
+                  <span id="nutr-mn" class="font-extrabold text-pink-950 text-xs sm:text-sm">0.00 g</span>
+                </div>
+                <div class="bg-cyan-50 border-2 border-cyan-400 rounded-lg p-2 shadow-2xs">
+                  <span class="block text-[10px] font-black text-cyan-900">Zinc (Zn)</span>
+                  <span id="nutr-zn" class="font-black text-cyan-950 text-xs sm:text-sm">0.00 g</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section title for fertilizer constituent list -->
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Constituent Fertilizers in 1 Dose:</span>
+          </div>
+
+          <!-- List of individual fertilizer components in 1 single dose -->
+          <div id="single-dose-breakdown-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-0.5">
+            <!-- Dynamic rows injected here -->
+          </div>
+        </div>
+
+        <!-- Result 2: Field / Bulk Requirement & Packaging -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 print-shadow-none">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center">
+                <i class="fa-solid fa-boxes-packing text-[10px]"></i>
+              </span>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base">Total Fertilizer Stock Needed</h3>
+                <p class="text-[11px] text-slate-500">For <span id="display-bulk-count" class="font-bold text-slate-700">500</span> trees / palms</p>
+              </div>
+            </div>
+            <span id="display-total-mix-needed" class="text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">0.0 kg</span>
+          </div>
+
+          <div id="bulk-breakdown-list" class="space-y-2.5 text-xs">
+            <!-- Dynamic bulk items with bag indicators -->
+          </div>
+
+          <!-- Packaging footnote -->
+          <div class="mt-4 pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-500">
+            <span><i class="fa-solid fa-truck-moving text-emerald-600 mr-1"></i> Packaging matched to Indian standards (50kg, Urea 45kg, 25kg, 5kg &amp; 1kg)</span>
+            <span id="display-total-bags" class="font-bold text-slate-700">Calculated</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Agronomy Reference Guide -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs text-xs text-slate-600 space-y-3">
+      <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+        <i class="fa-solid fa-book-open-reader text-emerald-600"></i> Agricultural Reference &amp; Secondary Nutrient Role
+      </h4>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-1">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span class="font-semibold text-slate-800 block text-xs mb-1">Granulated Dolomite (19Ca:11Mg)</span>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Standard 25kg bag. Premium natural soil conditioner providing 19% Calcium and 11% Magnesium. Neutralizes acidic soils (common in high-rainfall Western Ghats) while preventing Mg chlorosis.
+          </p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span class="font-semibold text-slate-800 block text-xs mb-1">SPIC Keerthi CMS (15Ca:3Mg:5S)</span>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Standard 50kg bag. Balanced multi-secondary granule delivering 15% Calcium, 3% Magnesium, and 5% Sulfur. Perfect for Arecanut and plantation crops needing continuous root calcium.
+          </p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span class="font-semibold text-slate-800 block text-xs mb-1">Urea (45kg) &amp; MOP (50kg)</span>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Standardized commercial Indian packaging. Urea provides 46% N in 45kg sacks, and MOP supplies 60% K₂O in 50kg bags for nut/fruit filling and drought tolerance.
+          </p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <span class="font-semibold text-slate-800 block text-xs mb-1">DAP &amp; Ammonium Sulfate</span>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            DAP supplies 18% N and 46% P₂O₅ for initial root development. Ammonium Sulfate (20.5% N, 24% S) delivers high-efficiency ammoniacal nitrogen with sulfur acidification.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500 no-print">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>© <span id="year-span"></span> AgroMix Pro India — prasadhk@gmail.com</p>
+      <div class="flex items-center space-x-3 text-slate-400">
+        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Application State: Initialized with default UREA + DAP + MOP blend
+    const state = {
+      inputUnit: 'kg', // 'kg' or 'g'
+      doseUnit: 'g',   // 'g' or 'kg'
+      fertilizers: [
+        { id: 1, name: 'Urea (46-0-0)', quantity: 45, n: 46, p: 0, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '45kg' },
+        { id: 2, name: 'DAP (18-46-0)', quantity: 50, n: 18, p: 46, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' },
+        { id: 3, name: 'MOP (0-0-60 Potash)', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
+      ],
+      nextId: 4
+    };
+
+    const colorPalette = [
+      { tag: 'bg-blue-100 text-blue-900 border-blue-200', bar: 'bg-blue-500' },
+      { tag: 'bg-slate-200 text-slate-900 border-slate-300', bar: 'bg-slate-600' },
+      { tag: 'bg-rose-100 text-rose-900 border-rose-200', bar: 'bg-rose-500' },
+      { tag: 'bg-amber-100 text-amber-900 border-amber-200', bar: 'bg-amber-500' },
+      { tag: 'bg-emerald-100 text-emerald-800 border-emerald-200', bar: 'bg-emerald-500' },
+      { tag: 'bg-teal-100 text-teal-800 border-teal-200', bar: 'bg-teal-500' },
+      { tag: 'bg-lime-100 text-lime-900 border-lime-300', bar: 'bg-lime-500' },
+      { tag: 'bg-cyan-100 text-cyan-900 border-cyan-300', bar: 'bg-cyan-500' },
+      { tag: 'bg-purple-100 text-purple-800 border-purple-200', bar: 'bg-purple-500' },
+      { tag: 'bg-orange-100 text-orange-900 border-orange-300', bar: 'bg-orange-500' }
+    ];
+
+    // DOM Elements
+    const fertilizerRowsEl = document.getElementById('fertilizer-rows');
+    const batchTotalWeightEl = document.getElementById('batch-total-weight');
+    const itemsCountBadge = document.getElementById('items-count-badge');
+    const singleDoseListEl = document.getElementById('single-dose-breakdown-list');
+    const bulkBreakdownListEl = document.getElementById('bulk-breakdown-list');
+    const doseAmountInput = document.getElementById('dose-amount');
+    const doseUnitSelect = document.getElementById('dose-unit-select');
+    const plantCountInput = document.getElementById('plant-count');
+    const displaySingleDoseTotal = document.getElementById('display-single-dose-total');
+    const displayBulkCount = document.getElementById('display-bulk-count');
+    const displayTotalMixNeeded = document.getElementById('display-total-mix-needed');
+    const displayTotalBags = document.getElementById('display-total-bags');
+    const batchCoverageCountEl = document.getElementById('batch-coverage-count');
+    const compatibilityText = document.getElementById('compatibility-text');
+
+    // 10 Nutrients (Primary, Secondary, Micronutrients)
+    const nutrN = document.getElementById('nutr-n');
+    const nutrP = document.getElementById('nutr-p');
+    const nutrK = document.getElementById('nutr-k');
+    const nutrCa = document.getElementById('nutr-ca');
+    const nutrMg = document.getElementById('nutr-mg');
+    const nutrS = document.getElementById('nutr-s');
+    const nutrB = document.getElementById('nutr-b');
+    const nutrFe = document.getElementById('nutr-fe');
+    const nutrMn = document.getElementById('nutr-mn');
+    const nutrZn = document.getElementById('nutr-zn');
+
+    const unitBtnKg = document.getElementById('unit-btn-kg');
+    const unitBtnG = document.getElementById('unit-btn-g');
+    const addFertilizerBtn = document.getElementById('add-fertilizer-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const copySummaryBtn = document.getElementById('copy-summary-btn');
+    const downloadCsvBtn = document.getElementById('download-csv-btn');
+    const printBtn = document.getElementById('print-btn');
+    const toastBox = document.getElementById('toast-box');
+    const toastMsg = document.getElementById('toast-msg');
+
+    document.getElementById('year-span').textContent = new Date().getFullYear();
+
+    function showToast(message, iconClass = 'fa-solid fa-circle-check text-emerald-400 text-base') {
+      toastMsg.textContent = message;
+      document.getElementById('toast-icon').className = iconClass;
+      toastBox.classList.remove('opacity-0', 'translate-y-24', 'pointer-events-none');
+      toastBox.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toastBox.classList.add('opacity-0', 'translate-y-24', 'pointer-events-none');
+        toastBox.classList.remove('opacity-100', 'translate-y-0');
+      }, 2400);
+    }
+
+    function formatNum(num, dec = 2) {
+      if (isNaN(num) || !isFinite(num)) return '0.00';
+      if (num === 0) return '0.00';
+      if (num < 0.01 && num > 0) return num.toFixed(3);
+      return Number(num.toFixed(dec)).toLocaleString('en-US', {
+        minimumFractionDigits: dec,
+        maximumFractionDigits: dec
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function buildProfileBadge(fert) {
+      const parts = [];
+      if (fert.n || fert.p || fert.k) {
+        parts.push(`<span class="font-semibold text-slate-700">${fert.n || 0}-${fert.p || 0}-${fert.k || 0}</span>`);
+      }
+      if (fert.ca) parts.push(`<span class="text-amber-800 font-bold bg-amber-100 px-1 rounded">${fert.ca}%Ca</span>`);
+      if (fert.mg) parts.push(`<span class="text-teal-800 font-bold bg-teal-100 px-1 rounded">${fert.mg}%Mg</span>`);
+      if (fert.s) parts.push(`<span class="text-yellow-800 font-bold bg-yellow-100 px-1 rounded">${fert.s}%S</span>`);
+      if (fert.b) parts.push(`<span class="text-lime-900 font-extrabold bg-lime-100 px-1 rounded border border-lime-300">${fert.b}%B</span>`);
+      if (fert.fe) parts.push(`<span class="text-orange-900 font-bold bg-orange-100 px-1 rounded">${fert.fe}%Fe</span>`);
+      if (fert.mn) parts.push(`<span class="text-pink-900 font-bold bg-pink-100 px-1 rounded">${fert.mn}%Mn</span>`);
+      if (fert.zn) parts.push(`<span class="text-cyan-900 font-extrabold bg-cyan-100 px-1 rounded">${fert.zn}%Zn</span>`);
+
+      if (parts.length === 0) {
+        return `<span class="text-slate-400">Custom</span>`;
+      }
+      return parts.join(' ');
+    }
+
+    // Rebuilds row elements only when rows are added, removed, or preset-loaded
+    function rebuildTableDOM() {
+      fertilizerRowsEl.innerHTML = '';
+      itemsCountBadge.textContent = `${state.fertilizers.length} item${state.fertilizers.length === 1 ? '' : 's'}`;
+
+      state.fertilizers.forEach((fert, idx) => {
+        const color = colorPalette[idx % colorPalette.length];
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/90 transition-colors group border-b border-slate-100';
+        tr.setAttribute('data-row-id', fert.id);
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0 ${color.bar}"></span>
+              <input 
+                type="text" 
+                value="${escapeHtml(fert.name)}" 
+                data-id="${fert.id}" 
+                data-field="name" 
+                placeholder="Fertilizer Name" 
+                class="name-input w-full bg-transparent border-0 border-b border-transparent focus:border-emerald-500 focus:bg-white text-slate-800 font-semibold py-1 px-1.5 text-xs sm:text-sm rounded focus:outline-none transition"
+              >
+            </div>
+          </td>
+          <td class="py-2.5 px-2 text-center">
+            <div class="inline-flex items-center gap-1 text-[11px] bg-slate-100 px-2 py-0.5 rounded-md font-mono flex-wrap justify-center">
+              ${buildProfileBadge(fert)}
+            </div>
+          </td>
+          <td class="py-2.5 px-3 text-right">
+            <input 
+              type="number" 
+              value="${fert.quantity !== '' ? fert.quantity : ''}" 
+              data-id="${fert.id}" 
+              data-field="quantity" 
+              step="any" 
+              min="0" 
+              placeholder="0" 
+              class="qty-input w-20 sm:w-24 text-right bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-lg py-1 px-2 text-slate-900 font-bold text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
+            >
+          </td>
+          <td class="py-2.5 px-3 text-right">
+            <span class="share-badge inline-block px-2 py-0.5 rounded-md ${color.tag} font-bold text-xs">
+              0.0%
+            </span>
+          </td>
+          <td class="py-2.5 px-2 text-center no-print">
+            <button 
+              type="button" 
+              data-id="${fert.id}" 
+              class="btn-delete-row text-slate-300 hover:text-rose-500 p-1 rounded-md transition"
+              title="Delete row"
+              ${state.fertilizers.length <= 1 ? 'disabled style="opacity:0.2;"' : ''}
+            >
+              <i class="fa-regular fa-trash-can text-sm"></i>
+            </button>
+          </td>
+        `;
+        fertilizerRowsEl.appendChild(tr);
+      });
+
+      document.querySelectorAll('.input-unit-label').forEach(el => {
+        el.textContent = state.inputUnit;
+      });
+
+      calculateAndRenderResults();
+    }
+
+    function calculateAndRenderResults() {
+      const totalBatchWeight = state.fertilizers.reduce((sum, f) => sum + (Number(f.quantity) || 0), 0);
+      batchTotalWeightEl.textContent = formatNum(totalBatchWeight, 2);
+
+      // In-place updates to keep focus uninterrupted on keypress
+      state.fertilizers.forEach((fert) => {
+        const qty = Number(fert.quantity) || 0;
+        const pct = totalBatchWeight > 0 ? (qty / totalBatchWeight) * 100 : 0;
+        const row = fertilizerRowsEl.querySelector(`tr[data-row-id="${fert.id}"]`);
+        if (row) {
+          const badge = row.querySelector('.share-badge');
+          if (badge) {
+            badge.textContent = `${pct.toFixed(1)}%`;
+          }
+        }
+      });
+
+      const rawDose = parseFloat(doseAmountInput.value) || 0;
+      const doseUnit = doseUnitSelect.value;
+      const plantCount = parseInt(plantCountInput.value, 10) || 0;
+
+      let doseInGrams = 0;
+      let doseInKg = 0;
+
+      if (doseUnit === 'g') {
+        doseInGrams = rawDose;
+        doseInKg = rawDose / 1000;
+        displaySingleDoseTotal.textContent = `${formatNum(rawDose, 1)} g (${formatNum(doseInKg, 3)} kg)`;
+      } else {
+        doseInKg = rawDose;
+        doseInGrams = rawDose * 1000;
+        displaySingleDoseTotal.textContent = `${formatNum(rawDose, 3)} kg (${formatNum(doseInGrams, 1)} g)`;
+      }
+
+      // Calculation of Trees / Palms covered in 1 Batch Mix
+      let totalBatchKg = state.inputUnit === 'kg' ? totalBatchWeight : (totalBatchWeight / 1000);
+      let treesCovered = 0;
+      if (doseInKg > 0 && totalBatchKg > 0) {
+        treesCovered = Math.floor(totalBatchKg / doseInKg);
+      }
+      batchCoverageCountEl.textContent = treesCovered.toLocaleString();
+
+      singleDoseListEl.innerHTML = '';
+      bulkBreakdownListEl.innerHTML = '';
+
+      if (totalBatchWeight <= 0 || rawDose <= 0) {
+        singleDoseListEl.innerHTML = `
+          <div class="text-center py-6 text-slate-400 text-xs">
+            <i class="fa-solid fa-scale-unbalanced text-2xl mb-2 text-slate-300"></i>
+            <p>Please enter quantities and application dose to calculate.</p>
+          </div>
+        `;
+        nutrN.textContent = '0.0 g';
+        nutrP.textContent = '0.0 g';
+        nutrK.textContent = '0.0 g';
+        nutrCa.textContent = '0.0 g';
+        nutrMg.textContent = '0.0 g';
+        nutrS.textContent = '0.0 g';
+        nutrB.textContent = '0.00 g';
+        nutrFe.textContent = '0.00 g';
+        nutrMn.textContent = '0.00 g';
+        nutrZn.textContent = '0.00 g';
+        displayBulkCount.textContent = plantCount;
+        displayTotalMixNeeded.textContent = '0.00 kg';
+        displayTotalBags.textContent = '0 bags';
+        return;
+      }
+
+      let totalN_g = 0;
+      let totalP_g = 0;
+      let totalK_g = 0;
+      let totalCa_g = 0;
+      let totalMg_g = 0;
+      let totalS_g = 0;
+      let totalB_g = 0;
+      let totalFe_g = 0;
+      let totalMn_g = 0;
+      let totalZn_g = 0;
+
+      let hasPhosphate = false;
+      let hasSulfates = false;
+      let hasChelates = false;
+      let hasBorax = false;
+
+      state.fertilizers.forEach((fert, idx) => {
+        const qty = Number(fert.quantity) || 0;
+        const share = qty / totalBatchWeight;
+        const pct = share * 100;
+        const color = colorPalette[idx % colorPalette.length];
+
+        const itemDoseGrams = doseInGrams * share;
+        const itemDoseKg = doseInKg * share;
+
+        const nPct = (fert.n || 0) / 100;
+        const pPct = (fert.p || 0) / 100;
+        const kPct = (fert.k || 0) / 100;
+        const caPct = (fert.ca || 0) / 100;
+        const mgPct = (fert.mg || 0) / 100;
+        const sPct = (fert.s || 0) / 100;
+        const bPct = (fert.b || 0) / 100;
+        const fePct = (fert.fe || 0) / 100;
+        const mnPct = (fert.mn || 0) / 100;
+        const znPct = (fert.zn || 0) / 100;
+
+        if (fert.p > 0) hasPhosphate = true;
+        if (fert.fe > 0 || fert.mn > 0 || ((fert.name || '').toLowerCase().includes('sulfate') && fert.zn > 0)) {
+          hasSulfates = true;
+        }
+        if ((fert.name || '').toLowerCase().includes('edta')) {
+          hasChelates = true;
+        }
+        if ((fert.b || 0) > 0 || (fert.name || '').toLowerCase().includes('borax')) {
+          hasBorax = true;
+        }
+
+        totalN_g += itemDoseGrams * nPct;
+        totalP_g += itemDoseGrams * pPct;
+        totalK_g += itemDoseGrams * kPct;
+        totalCa_g += itemDoseGrams * caPct;
+        totalMg_g += itemDoseGrams * mgPct;
+        totalS_g += itemDoseGrams * sPct;
+        totalB_g += itemDoseGrams * bPct;
+        totalFe_g += itemDoseGrams * fePct;
+        totalMn_g += itemDoseGrams * mnPct;
+        totalZn_g += itemDoseGrams * znPct;
+
+        // Bulk orchard requirements
+        const bulkItemKg = itemDoseKg * plantCount;
+        
+        // Packaging calculation
+        let packText = '';
+        const nameLower = (fert.name || '').toLowerCase();
+        if (fert.packType === '1kg' || ((fert.fe || 0) === 0 && (fert.mn || 0) === 0 && (fert.zn || 0) > 0 && fert.zn < 15)) {
+          const packs = Math.ceil(bulkItemKg);
+          packText = `${packs} × 1kg pouches`;
+        } else if (fert.packType === '5kg' || fert.b > 0 || fert.fe > 0 || fert.mn > 0 || fert.zn >= 15) {
+          const pouches5 = (bulkItemKg / 5).toFixed(1);
+          packText = `${pouches5} × 5kg packs`;
+        } else if (fert.packType === '25kg' || nameLower.includes('dolomite')) {
+          packText = `${(bulkItemKg / 25).toFixed(1)} × 25kg bags`;
+        } else if (fert.packType === '45kg' || nameLower.includes('urea')) {
+          packText = `${(bulkItemKg / 45).toFixed(1)} × 45kg urea bags`;
+        } else {
+          packText = `${(bulkItemKg / 50).toFixed(1)} × 50kg bags`;
+        }
+
+        // Single Dose Card
+        const singleCard = document.createElement('div');
+        singleCard.className = 'bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 flex flex-col gap-1.5 hover:border-emerald-300 transition-all';
+        singleCard.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 truncate pr-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0 ${color.bar}"></span>
+              <span class="font-bold text-slate-800 text-xs sm:text-sm truncate">${escapeHtml(fert.name)}</span>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="font-extrabold text-slate-900 text-sm sm:text-base">${formatNum(itemDoseGrams, 1)} g</span>
+              <span class="text-[11px] text-slate-500 font-medium block">(${formatNum(itemDoseKg, 3)} kg)</span>
+            </div>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden mt-0.5">
+            <div class="${color.bar} h-1.5 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+            <span>Blend Share: <strong class="text-slate-700">${pct.toFixed(1)}%</strong></span>
+            <span>Profile: ${buildProfileBadge(fert)}</span>
+          </div>
+        `;
+        singleDoseListEl.appendChild(singleCard);
+
+        // Bulk List Item
+        if (plantCount > 0) {
+          const bulkDiv = document.createElement('div');
+          bulkDiv.className = 'flex items-center justify-between py-2 border-b border-slate-100 last:border-b-0';
+          bulkDiv.innerHTML = `
+            <div class="flex items-center space-x-2 truncate pr-2">
+              <span class="w-2 h-2 rounded-full ${color.bar} shrink-0"></span>
+              <div class="truncate">
+                <span class="font-medium text-slate-800 truncate text-xs sm:text-sm">${escapeHtml(fert.name)}</span>
+                <span class="block text-[10px] text-emerald-700 font-medium">${packText}</span>
+              </div>
+            </div>
+            <div class="text-right shrink-0 font-semibold text-slate-900">
+              <span class="text-xs sm:text-sm">${formatNum(bulkItemKg, 2)} kg</span>
+            </div>
+          `;
+          bulkBreakdownListEl.appendChild(bulkDiv);
+        }
+      });
+
+      // Update 10 Pure Elemental Nutrients
+      nutrN.textContent = `${formatNum(totalN_g, 1)} g`;
+      nutrP.textContent = `${formatNum(totalP_g, 1)} g`;
+      nutrK.textContent = `${formatNum(totalK_g, 1)} g`;
+      nutrCa.textContent = `${formatNum(totalCa_g, 1)} g`;
+      nutrMg.textContent = `${formatNum(totalMg_g, 1)} g`;
+      nutrS.textContent = `${formatNum(totalS_g, 1)} g`;
+      nutrB.textContent = `${formatNum(totalB_g, 2)} g`;
+      nutrFe.textContent = `${formatNum(totalFe_g, 2)} g`;
+      nutrMn.textContent = `${formatNum(totalMn_g, 2)} g`;
+      nutrZn.textContent = `${formatNum(totalZn_g, 2)} g`;
+
+      // Update Bulk Totals
+      displayBulkCount.textContent = plantCount.toLocaleString();
+      const totalFieldKg = doseInKg * plantCount;
+      displayTotalMixNeeded.textContent = `${formatNum(totalFieldKg, 1)} kg total`;
+      displayTotalBags.textContent = `~${formatNum(totalFieldKg / 50, 1)} bulk bags`;
+
+      // Compatibility Advisory
+      let advisoryNotes = [];
+      if (hasBorax) {
+        advisoryNotes.push("<strong>Borax Notice:</strong> Ensure thorough physical dry blending of Borax granules/powder into bulk carriers. Boron has a narrow margin between deficiency and toxicity; uniform dispersion avoids root damage.");
+      }
+      if (hasPhosphate && hasSulfates) {
+        advisoryNotes.push("<strong>Phosphate + Sulfate Caution:</strong> Dry blend on tarpaulin sheets and broadcast on the same day. Do not dissolve high-concentration unchelated metal sulfates and phosphates together in fertigation tanks.");
+      } else if (hasChelates) {
+        advisoryNotes.push("<strong>Chelated Stability:</strong> Chelated EDTA micronutrients are fully protected against mineral lockout in drip tanks.");
+      }
+
+      if (advisoryNotes.length > 0) {
+        compatibilityText.innerHTML = advisoryNotes.join('<br class="my-1">');
+      } else {
+        compatibilityText.innerHTML = `
+          Ensure uniform hand or shovel blending on clean tarpaulin sheets. Store away from dampness to prevent hygroscopic caking of Urea and granules.
+        `;
+      }
+    }
+
+    // Input listener preserves active focus and cursor without re-rendering rows
+    fertilizerRowsEl.addEventListener('input', (e) => {
+      const id = parseInt(e.target.dataset.id, 10);
+      const field = e.target.dataset.field;
+      if (!id || !field) return;
+
+      const fert = state.fertilizers.find(f => f.id === id);
+      if (fert) {
+        if (field === 'name') fert.name = e.target.value;
+        if (field === 'quantity') {
+          fert.quantity = e.target.value === '' ? '' : parseFloat(e.target.value);
+        }
+      }
+      calculateAndRenderResults();
+    });
+
+    // Delete row event
+    fertilizerRowsEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete-row');
+      if (!btn) return;
+      const id = parseInt(btn.dataset.id, 10);
+      if (state.fertilizers.length <= 1) {
+        showToast('At least one fertilizer must remain.', 'fa-solid fa-triangle-exclamation text-amber-400 text-base');
+        return;
+      }
+      state.fertilizers = state.fertilizers.filter(f => f.id !== id);
+      rebuildTableDOM();
+      showToast('Fertilizer removed');
+    });
+
+    // Add Custom Row
+    addFertilizerBtn.addEventListener('click', () => {
+      state.fertilizers.push({
+        id: state.nextId++,
+        name: `Custom Fertilizer ${state.fertilizers.length + 1}`,
+        quantity: 50,
+        n: 0,
+        p: 0,
+        k: 0,
+        ca: 0,
+        mg: 0,
+        s: 0,
+        b: 0,
+        fe: 0,
+        mn: 0,
+        zn: 0,
+        packType: '50kg'
+      });
+      rebuildTableDOM();
+      showToast('Custom row added');
+    });
+
+    // Reset Table
+    clearAllBtn.addEventListener('click', () => {
+      state.fertilizers = [
+        { id: 1, name: 'Urea (46-0-0)', quantity: 45, n: 46, p: 0, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '45kg' },
+        { id: 2, name: 'DAP (18-46-0)', quantity: 50, n: 18, p: 46, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' },
+        { id: 3, name: 'MOP (0-0-60 Potash)', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
+      ];
+      state.nextId = 4;
+      rebuildTableDOM();
+      showToast('Reset to default UREA + DAP + MOP');
+    });
+
+    // Quick-Add Catalog Chips
+    document.getElementById('quick-add-pills').addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-quick-add');
+      if (!btn) return;
+
+      const name = btn.dataset.name;
+      const n = parseFloat(btn.dataset.n) || 0;
+      const p = parseFloat(btn.dataset.p) || 0;
+      const k = parseFloat(btn.dataset.k) || 0;
+      const ca = parseFloat(btn.dataset.ca) || 0;
+      const mg = parseFloat(btn.dataset.mg) || 0;
+      const s = parseFloat(btn.dataset.s) || 0;
+      const b = parseFloat(btn.dataset.b) || 0;
+      const fe = parseFloat(btn.dataset.fe) || 0;
+      const mn = parseFloat(btn.dataset.mn) || 0;
+      const zn = parseFloat(btn.dataset.zn) || 0;
+      const packType = btn.dataset.pack || '50kg';
+      const defaultQty = parseFloat(btn.dataset.default) || 50;
+
+      state.fertilizers.push({
+        id: state.nextId++,
+        name,
+        quantity: defaultQty,
+        n,
+        p,
+        k,
+        ca,
+        mg,
+        s,
+        b,
+        fe,
+        mn,
+        zn,
+        packType
+      });
+      rebuildTableDOM();
+      showToast(`Added ${name} (${defaultQty} ${state.inputUnit})`);
+    });
+
+    // Unit toggle (kg / g)
+    unitBtnKg.addEventListener('click', () => {
+      if (state.inputUnit === 'kg') return;
+      state.inputUnit = 'kg';
+      unitBtnKg.className = 'px-2.5 py-1 rounded-lg bg-emerald-700 text-white shadow-xs transition';
+      unitBtnG.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-200 transition';
+      document.querySelectorAll('.input-unit-label').forEach(el => el.textContent = 'kg');
+      calculateAndRenderResults();
+    });
+
+    unitBtnG.addEventListener('click', () => {
+      if (state.inputUnit === 'g') return;
+      state.inputUnit = 'g';
+      unitBtnG.className = 'px-2.5 py-1 rounded-lg bg-emerald-700 text-white shadow-xs transition';
+      unitBtnKg.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-200 transition';
+      document.querySelectorAll('.input-unit-label').forEach(el => el.textContent = 'grams');
+      calculateAndRenderResults();
+    });
+
+    doseAmountInput.addEventListener('input', calculateAndRenderResults);
+    doseUnitSelect.addEventListener('change', calculateAndRenderResults);
+    plantCountInput.addEventListener('input', calculateAndRenderResults);
+
+    // Preset 1: UREA + DAP + MOP
+    document.getElementById('preset-urea-dap-mop').addEventListener('click', () => {
+      state.fertilizers = [
+        { id: 1, name: 'Urea (46-0-0)', quantity: 45, n: 46, p: 0, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '45kg' },
+        { id: 2, name: 'DAP (18-46-0)', quantity: 50, n: 18, p: 46, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' },
+        { id: 3, name: 'MOP (0-0-60 Potash)', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
+      ];
+      state.nextId = 4;
+      doseAmountInput.value = 500;
+      doseUnitSelect.value = 'g';
+      rebuildTableDOM();
+      showToast('Loaded UREA + DAP + MOP Preset');
+    });
+
+    // Preset 2: UREA + SSP + MOP
+    document.getElementById('preset-urea-ssp-mop').addEventListener('click', () => {
+      state.fertilizers = [
+        { id: 1, name: 'Urea (46-0-0)', quantity: 45, n: 46, p: 0, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '45kg' },
+        { id: 2, name: 'SSP (Single Super Phosphate)', quantity: 50, n: 0, p: 16, k: 0, ca: 21, mg: 0, s: 11, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' },
+        { id: 3, name: 'MOP (0-0-60 Potash)', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
+      ];
+      state.nextId = 4;
+      doseAmountInput.value = 500;
+      doseUnitSelect.value = 'g';
+      rebuildTableDOM();
+      showToast('Loaded UREA + SSP + MOP Preset');
+    });
+
+    // Preset 3: AS + DAP + MOP
+    document.getElementById('preset-as-dap-mop').addEventListener('click', () => {
+      state.fertilizers = [
+        { id: 1, name: 'Ammonium Sulfate (20.5-0-0-24S)', quantity: 50, n: 20.5, p: 0, k: 0, ca: 0, mg: 0, s: 24, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' },
+        { id: 2, name: 'DAP (18-46-0)', quantity: 50, n: 18, p: 46, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' },
+        { id: 3, name: 'MOP (0-0-60 Potash)', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
+      ];
+      state.nextId = 4;
+      doseAmountInput.value = 500;
+      doseUnitSelect.value = 'g';
+      rebuildTableDOM();
+      showToast('Loaded AS + DAP + MOP Preset');
+    });
+
+    // Preset 4: Full Micro Blend (Retained)
+    document.getElementById('preset-micro-booster').addEventListener('click', () => {
+      state.fertilizers = [
+        { id: 1, name: 'Magnesium Sulfate', quantity: 25, n: 0, p: 0, k: 0, ca: 0, mg: 9.6, s: 12, b: 0, fe: 0, mn: 0, zn: 0, packType: '25kg' },
+        { id: 2, name: 'Borax (10.5% Boron)', quantity: 5, n: 0, p: 0, k: 0, ca: 0, mg: 0, s: 0, b: 10.5, fe: 0, mn: 0, zn: 0, packType: '5kg' },
+        { id: 3, name: 'Zinc Sulfate (21% Zn)', quantity: 15, n: 0, p: 0, k: 0, ca: 0, mg: 0, s: 10, b: 0, fe: 0, mn: 0, zn: 21, packType: '5kg' },
+        { id: 4, name: 'Ferrous Sulfate', quantity: 10, n: 0, p: 0, k: 0, ca: 0, mg: 0, s: 10.5, b: 0, fe: 19, mn: 0, zn: 0, packType: '5kg' },
+        { id: 5, name: 'Manganese Sulfate', quantity: 5, n: 0, p: 0, k: 0, ca: 0, mg: 0, s: 17, b: 0, fe: 0, mn: 30.5, zn: 0, packType: '5kg' }
+      ];
+      state.nextId = 6;
+      doseAmountInput.value = 100;
+      doseUnitSelect.value = 'g';
+      rebuildTableDOM();
+      showToast('Loaded Full Micro Blend');
+    });
+
+    // Copy Summary to Clipboard
+    copySummaryBtn.addEventListener('click', () => {
+      const totalBatchWeight = state.fertilizers.reduce((sum, f) => sum + (Number(f.quantity) || 0), 0);
+      const dose = doseAmountInput.value;
+      const unit = doseUnitSelect.value;
+      const count = plantCountInput.value;
+      const doseInGrams = unit === 'g' ? parseFloat(dose) : parseFloat(dose) * 1000;
+      const doseInKg = doseInGrams / 1000;
+      const totalBatchKg = state.inputUnit === 'kg' ? totalBatchWeight : (totalBatchWeight / 1000);
+      const batchCoverage = doseInKg > 0 ? Math.floor(totalBatchKg / doseInKg) : 0;
+
+      let text = `==============================================\n`;
+      text += `AGROMIX PRO INDIA: FERTILIZER APPLICATION REPORT\n`;
+      text += `==============================================\n`;
+      text += `• Target Dose: ${dose} ${unit} per tree/palm\n`;
+      text += `• Coverage per 1 Batch Mix: ${batchCoverage} trees/palms\n`;
+      if (count) text += `• Total Orchard Size: ${count} trees/palms\n`;
+      text += `• Total Formulation Batch Weight: ${totalBatchWeight.toFixed(2)} ${state.inputUnit}\n\n`;
+
+      text += `--- Pure 10-Nutrient Elemental Delivery / Plant ---\n`;
+      text += `• Primary N-P2O5-K2O: N: ${nutrN.textContent} | P2O5: ${nutrP.textContent} | K2O: ${nutrK.textContent}\n`;
+      text += `• Secondary Ca-Mg-S: Ca: ${nutrCa.textContent} | Mg: ${nutrMg.textContent} | S: ${nutrS.textContent}\n`;
+      text += `• Micronutrients B-Fe-Mn-Zn: B: ${nutrB.textContent} | Fe: ${nutrFe.textContent} | Mn: ${nutrMn.textContent} | Zn: ${nutrZn.textContent}\n\n`;
+
+      text += `--- In 1 Single Apply (Per Plant Breakdown) ---\n`;
+      state.fertilizers.forEach((f, idx) => {
+        const qty = Number(f.quantity) || 0;
+        const prop = totalBatchWeight > 0 ? qty / totalBatchWeight : 0;
+        const singleG = doseInGrams * prop;
+        text += `${idx + 1}. ${f.name}: ${singleG.toFixed(1)} g (${(prop * 100).toFixed(1)}% of blend)\n`;
+      });
+
+      if (count) {
+        text += `\n--- Bulk Procurement For ${count} Plants ---\n`;
+        state.fertilizers.forEach((f) => {
+          const qty = Number(f.quantity) || 0;
+          const prop = totalBatchWeight > 0 ? qty / totalBatchWeight : 0;
+          const totalKg = ((doseInGrams / 1000) * prop) * parseInt(count, 10);
+          text += `• ${f.name}: ${totalKg.toFixed(2)} kg\n`;
+        });
+      }
+
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = text;
+      tempTextArea.style.position = 'fixed';
+      tempTextArea.style.left = '-9999px';
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Application summary copied to clipboard!');
+      } catch (err) {
+        showToast('Failed to copy', 'fa-solid fa-xmark text-rose-400 text-base');
+      }
+      document.body.removeChild(tempTextArea);
+    });
+
+    // CSV Download
+    downloadCsvBtn.addEventListener('click', () => {
+      const totalBatchWeight = state.fertilizers.reduce((sum, f) => sum + (Number(f.quantity) || 0), 0);
+      const dose = doseAmountInput.value;
+      const unit = doseUnitSelect.value;
+      const count = plantCountInput.value;
+      const doseInGrams = unit === 'g' ? parseFloat(dose) : parseFloat(dose) * 1000;
+
+      let csv = 'Fertilizer Name,Batch Qty (' + state.inputUnit + '),Share (%),N%,P2O5%,K2O%,Ca%,Mg%,S%,B%,Fe%,Mn%,Zn%,Dose Per Plant (g),Bulk Req (' + count + ' plants kg)\n';
+
+      state.fertilizers.forEach(f => {
+        const qty = Number(f.quantity) || 0;
+        const share = totalBatchWeight > 0 ? (qty / totalBatchWeight) : 0;
+        const doseG = doseInGrams * share;
+        const bulkKg = (doseG / 1000) * (parseInt(count, 10) || 1);
+
+        csv += `"${f.name.replace(/"/g, '""')}",${qty},${(share * 100).toFixed(2)},${f.n || 0},${f.p || 0},${f.k || 0},${f.ca || 0},${f.mg || 0},${f.s || 0},${f.b || 0},${f.fe || 0},${f.mn || 0},${f.zn || 0},${doseG.toFixed(2)},${bulkKg.toFixed(2)}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `orchard_fertilizer_mix_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('CSV downloaded successfully');
+    });
+
+    // Print
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      rebuildTableDOM();
+    });
+  </script>
+</body>
+</html>
