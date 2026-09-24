@@ -539,7 +539,7 @@
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
       <p>© <span id="year-span"></span> AgroMix Pro India — prasadhk@gmail.com</p>
       <div class="flex items-center space-x-3 text-slate-400">
-        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator · v1.7</span>
+        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator · v1.8</span>
       </div>
     </div>
   </footer>
@@ -677,14 +677,9 @@
           <td class="py-2 px-1.5 sm:px-3">
             <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
               <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0 ${color.bar}"></span>
-              <input 
-                type="text" 
-                value="${escapeHtml(fert.name)}" 
-                data-id="${fert.id}" 
-                data-field="name" 
-                placeholder="Fertilizer Name" 
-                class="name-input w-full min-w-0 bg-transparent border-0 border-b border-transparent focus:border-emerald-500 focus:bg-white text-slate-800 font-semibold py-1 px-1 sm:px-1.5 text-xs sm:text-sm rounded focus:outline-none transition"
-              >
+              <span class="text-slate-800 font-semibold text-xs sm:text-sm truncate select-none" title="${escapeHtml(fert.name)}">
+                ${escapeHtml(fert.name)}
+              </span>
             </div>
           </td>
           <td class="py-2 px-1 sm:px-2 text-center">
