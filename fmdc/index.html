@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AgroMix Pro India — Fertilizer Mixing & Elemental Dosage Calculator</title>
+  <title>AgroMix Pro — Fertilizer Mixing & Dosage Calculator</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -59,9 +59,9 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight flex items-center gap-2">
-            AgroMix Pro <span class="bg-emerald-800 text-emerald-200 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-emerald-600/50">India Fertilizer &amp; Orchard Edition</span>
+            AgroMix Pro
           </h1>
-          <p class="text-xs text-emerald-300/80">Batch Mix Proportion, Single Dose (1 Apply) &amp; 10-Nutrient Elemental Profiler</p>
+          <p class="text-xs text-emerald-300/80">Batch Mix Proportion, Dose Calculation &amp; Nutrient Profiler</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -113,8 +113,7 @@
             <i class="fa-solid fa-flask text-[11px]"></i>
           </span>
           <div>
-            <span class="text-xs font-extrabold text-emerald-950 uppercase tracking-wider block">Field Presets</span>
-            <span class="text-[10px] text-emerald-800">One-click standard Indian farm formulations</span>
+            <span class="text-xs font-extrabold text-emerald-950 uppercase tracking-wider block">Common Fertilizer Presets</span>
           </div>
         </div>
         <div class="flex flex-wrap gap-1.5">
@@ -294,9 +293,9 @@
                   id="dose-amount" 
                   step="any" 
                   min="0.01" 
-                  value="500" 
+                  value="300" 
                   class="w-full pl-3 pr-24 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-base transition"
-                  placeholder="500"
+                  placeholder="300"
                 >
                 <div class="absolute inset-y-0 right-0 flex items-center pr-1.5">
                   <select id="dose-unit-select" class="h-8 py-0 pl-2 pr-6 border-transparent bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs rounded-lg focus:outline-none cursor-pointer">
@@ -305,7 +304,7 @@
                   </select>
                 </div>
               </div>
-              <p class="text-[11px] text-slate-500 mt-1">E.g., 250 g or 500 g per basin or tree root ring.</p>
+              <p class="text-[11px] text-slate-500 mt-1">E.g., 250 g, 300 g or 500 g per basin or tree root ring.</p>
             </div>
 
             <!-- Total trees -->
@@ -388,7 +387,7 @@
           <!-- Total Target Dose banner -->
           <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-3.5 flex items-center justify-between">
             <span class="text-xs font-semibold text-emerald-900">Total Dose per Plant:</span>
-            <span id="display-single-dose-total" class="font-extrabold text-emerald-900 text-base sm:text-lg">500 g</span>
+            <span id="display-single-dose-total" class="font-extrabold text-emerald-900 text-base sm:text-lg">300 g</span>
           </div>
 
           <!-- Group 1: Nutrient Delivery / Plant -->
@@ -546,9 +545,9 @@
 
   <footer class="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500 no-print">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-      <p>© <span id="year-span"></span> AgroMix Pro India — prasadhk@gmail.com</p>
+      <p>© <span id="year-span"></span> AgroMix Pro — prasadhk@gmail.com</p>
       <div class="flex items-center space-x-3 text-slate-400">
-        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator · v1.10</span>
+        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator · v1.12</span>
       </div>
     </div>
   </footer>
@@ -998,6 +997,8 @@
         { id: 3, name: 'MOP', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
       ];
       state.nextId = 4;
+      doseAmountInput.value = 300;
+      doseUnitSelect.value = 'g';
       rebuildTableDOM();
       showToast('Reset to default UREA + DAP + MOP');
     });
@@ -1072,7 +1073,7 @@
         { id: 3, name: 'MOP', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
       ];
       state.nextId = 4;
-      doseAmountInput.value = 500;
+      doseAmountInput.value = 300;
       doseUnitSelect.value = 'g';
       rebuildTableDOM();
       showToast('Loaded UREA + DAP + MOP Preset');
@@ -1085,7 +1086,7 @@
         { id: 2, name: 'MOP', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
       ];
       state.nextId = 3;
-      doseAmountInput.value = 500;
+      doseAmountInput.value = 300;
       doseUnitSelect.value = 'g';
       rebuildTableDOM();
       showToast('Loaded UREA + MOP Preset');
@@ -1099,7 +1100,7 @@
         { id: 3, name: 'MOP', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
       ];
       state.nextId = 4;
-      doseAmountInput.value = 500;
+      doseAmountInput.value = 300;
       doseUnitSelect.value = 'g';
       rebuildTableDOM();
       showToast('Loaded UREA + SSP + MOP Preset');
@@ -1113,7 +1114,7 @@
         { id: 3, name: 'MOP', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
       ];
       state.nextId = 4;
-      doseAmountInput.value = 500;
+      doseAmountInput.value = 300;
       doseUnitSelect.value = 'g';
       rebuildTableDOM();
       showToast('Loaded AS + DAP + MOP Preset');
@@ -1147,7 +1148,7 @@
       const batchCoverage = doseInKg > 0 ? Math.floor(totalBatchKg / doseInKg) : 0;
 
       let text = `==============================================\n`;
-      text += `AGROMIX PRO INDIA: FERTILIZER APPLICATION REPORT\n`;
+      text += `AGROMIX PRO: FERTILIZER APPLICATION REPORT\n`;
       text += `==============================================\n`;
       text += `• Target Dose: ${dose} ${unit} per tree/palm\n`;
       text += `• Batch Mix Coverage: ${batchCoverage} trees/palms\n`;
@@ -1215,7 +1216,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `orchard_fertilizer_mix_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute('download', `fertilizer_mix_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
