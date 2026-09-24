@@ -121,6 +121,9 @@
           <button id="preset-urea-dap-mop" class="text-xs bg-white hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
             <i class="fa-solid fa-seedling text-emerald-700 text-xs"></i> UREA + DAP + MOP
           </button>
+          <button id="preset-urea-mop" class="text-xs bg-white hover:bg-emerald-100 text-emerald-950 border border-emerald-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-leaf text-emerald-700 text-xs"></i> UREA + MOP
+          </button>
           <button id="preset-urea-ssp-mop" class="text-xs bg-white hover:bg-blue-100 text-blue-950 border border-blue-300 font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-2xs">
             <i class="fa-solid fa-wheat-awn text-blue-700 text-xs"></i> UREA + SSP + MOP
           </button>
@@ -539,7 +542,7 @@
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
       <p>© <span id="year-span"></span> AgroMix Pro India — prasadhk@gmail.com</p>
       <div class="flex items-center space-x-3 text-slate-400">
-        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator · v1.8</span>
+        <span><i class="fa-solid fa-bolt text-emerald-500 mr-1"></i> Fertilizer Mixing &amp; Dosage Calculator · v1.9</span>
       </div>
     </div>
   </footer>
@@ -1093,6 +1096,19 @@
       doseUnitSelect.value = 'g';
       rebuildTableDOM();
       showToast('Loaded UREA + DAP + MOP Preset');
+    });
+
+    // Preset: UREA + MOP
+    document.getElementById('preset-urea-mop').addEventListener('click', () => {
+      state.fertilizers = [
+        { id: 1, name: 'Urea', quantity: 45, n: 46, p: 0, k: 0, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '45kg' },
+        { id: 2, name: 'MOP', quantity: 50, n: 0, p: 0, k: 60, ca: 0, mg: 0, s: 0, fe: 0, mn: 0, zn: 0, b: 0, packType: '50kg' }
+      ];
+      state.nextId = 3;
+      doseAmountInput.value = 500;
+      doseUnitSelect.value = 'g';
+      rebuildTableDOM();
+      showToast('Loaded UREA + MOP Preset');
     });
 
     // Preset 2: UREA + SSP + MOP
