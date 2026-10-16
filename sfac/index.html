@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soil Nutrient Availability & Depletion Calculator (Fertilizer-Based 12 Splits, 54-Week Horizon)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .chart-canvas-container {
+      position: relative;
+      height: 380px;
+      width: 100%;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .sticky-col-week {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+    }
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      .no-print { display: none !important; }
+      .chart-canvas-container { height: 260px !important; }
+      table { font-size: 7.5pt !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm no-print">
+    <div class="max-w-[96rem] mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-800 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-emerald-900/20">
+            <i class="fa-solid fa-calculator text-lg"></i>
+          </div>
+          <div>
+            <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white block leading-tight">Fertilizer-Based Soil Nutrient Calculator</span>
+            <span class="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Urea, SSP, MOP, Gypsum, MgSO₄, Borax &amp; Zn-EDTA • 54-Week Depletion Engine</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Reset / Demo Schedule Button -->
+          <button id="btnLoadDemo" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Demo Schedule
+          </button>
+          <button id="btnClearAll" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 transition">
+            <i class="fa-solid fa-trash mr-1"></i> Clear
+          </button>
+
+          <!-- Theme Toggle -->
+          <button id="themeToggle" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-800 transition" title="Toggle Dark/Light Mode">
+            <i class="fa-solid fa-moon dark:hidden"></i>
+            <i class="fa-solid fa-sun hidden dark:inline"></i>
+          </button>
+          
+          <!-- Print/Save -->
+          <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition">
+            <i class="fa-solid fa-print"></i>
+            <span class="hidden sm:inline">Print / PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-[96rem] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Hero / Summary Banner -->
+    <section class="bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <div class="relative z-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold mb-3">
+          <i class="fa-solid fa-seedling"></i> Fertilizer Quantity Input • Multi-Nutrient Superposition
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+          Fertilizer-Driven Soil Nutrient Availability &amp; Depletion Tracker
+        </h1>
+        <p class="text-slate-300 text-xs sm:text-sm max-w-4xl leading-relaxed mb-6">
+          Input your commercial fertilizer quantities (<strong class="text-white">Urea, SSP, MOP, Gypsum, MgSO₄, Borax, Zn-EDTA</strong>) in grams or kilograms for any of the 12 application slots. The engine dynamically calculates delivered elemental nutrients—including multi-source contributions like <strong class="text-sky-300">Ca (SSP + Gypsum)</strong> and <strong class="text-amber-300">S (Gypsum + SSP + MgSO₄)</strong>—and tracks weekly plant-available root-zone reserves over a full 54-week horizon.
+        </p>
+
+        <!-- KPI Summary Cards Grid (Total Applied Fertilizers & Total Delivered Nutrients) -->
+        <div class="space-y-3 pt-4 border-t border-emerald-800/60 font-mono text-center">
+          <div class="flex items-center justify-between text-xs text-slate-300 font-sans px-1">
+            <span class="font-semibold text-emerald-300 uppercase tracking-wider text-[11px]"><i class="fa-solid fa-bag-shopping mr-1"></i> Total Commercial Fertilizers Applied:</span>
+            <span class="text-slate-400 text-[10px]">Active Multi-Source Nutrient Tracking</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-red-500/30">
+              <span class="text-[10px] text-red-300 block uppercase font-sans font-semibold">Total Urea</span>
+              <span id="kpiFertUrea" class="text-base sm:text-lg font-bold text-red-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">46% N</span>
+            </div>
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-green-500/30">
+              <span class="text-[10px] text-green-300 block uppercase font-sans font-semibold">Total SSP</span>
+              <span id="kpiFertSSP" class="text-base sm:text-lg font-bold text-green-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">16% P, 19% Ca, 11% S</span>
+            </div>
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-blue-500/30">
+              <span class="text-[10px] text-blue-300 block uppercase font-sans font-semibold">Total MOP</span>
+              <span id="kpiFertMOP" class="text-base sm:text-lg font-bold text-blue-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">60% K₂O</span>
+            </div>
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-sky-500/30">
+              <span class="text-[10px] text-sky-300 block uppercase font-sans font-semibold">Total Gypsum</span>
+              <span id="kpiFertGypsum" class="text-base sm:text-lg font-bold text-sky-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">20% Ca, 16% S</span>
+            </div>
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-cyan-500/30">
+              <span class="text-[10px] text-cyan-300 block uppercase font-sans font-semibold">Total MgSO₄</span>
+              <span id="kpiFertMgSO4" class="text-base sm:text-lg font-bold text-cyan-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">9.6% Mg, 12% S</span>
+            </div>
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-orange-500/30">
+              <span class="text-[10px] text-orange-300 block uppercase font-sans font-semibold">Total Borax</span>
+              <span id="kpiFertBorax" class="text-base sm:text-lg font-bold text-orange-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">11% B</span>
+            </div>
+            <div class="bg-white/5 backdrop-blur rounded-xl p-2.5 border border-purple-500/30">
+              <span class="text-[10px] text-purple-300 block uppercase font-sans font-semibold">Total Zn-EDTA</span>
+              <span id="kpiFertZnEDTA" class="text-base sm:text-lg font-bold text-purple-400">0</span>
+              <span class="text-[9px] text-slate-400 block font-sans">12% Zn</span>
+            </div>
+          </div>
+
+          <!-- Total Active Elemental Soil Reserves Summary -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 pt-2 text-[10px]">
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-red-400 block font-semibold">Delivered N</span>
+              <span id="kpiDeliveredN" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-green-400 block font-semibold">Delivered P₂O₅</span>
+              <span id="kpiDeliveredP" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-blue-400 block font-semibold">Delivered K₂O</span>
+              <span id="kpiDeliveredK" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-sky-400 block font-semibold">Delivered Ca</span>
+              <span id="kpiDeliveredCa" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-cyan-400 block font-semibold">Delivered Mg</span>
+              <span id="kpiDeliveredMg" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-amber-400 block font-semibold">Delivered S</span>
+              <span id="kpiDeliveredS" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-orange-400 block font-semibold">Delivered B</span>
+              <span id="kpiDeliveredB" class="font-bold text-white text-xs">0</span>
+            </div>
+            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
+              <span class="text-purple-400 block font-semibold">Delivered Zn</span>
+              <span id="kpiDeliveredZn" class="font-bold text-white text-xs">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: 12-ROW FERTILIZER APPLICATION INPUT SCHEDULE -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-emerald-600"></i>
+            Fertilizer Input Schedule (12 Flexible Splits)
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Enter the <strong class="text-emerald-700 dark:text-emerald-400">Week # (1 to 54)</strong> in the first field for each application, then enter the fertilizer weight applied.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs px-2.5 py-1 rounded-md font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+            12 Input Slots
+          </span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs whitespace-nowrap">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-700 text-center">
+            <tr>
+              <th class="p-2.5 w-14">Dose #</th>
+              <th class="p-2.5 bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold w-24">Week # Input</th>
+              <th class="p-2.5 text-red-600 dark:text-red-400 bg-red-50/70 dark:bg-red-950/20">UREA</th>
+              <th class="p-2.5 text-green-600 dark:text-green-400 bg-green-50/70 dark:bg-green-950/20">SSP</th>
+              <th class="p-2.5 text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-950/20">MOP</th>
+              <th class="p-2.5 text-sky-600 dark:text-sky-400 bg-sky-50/70 dark:bg-sky-950/20">Gypsum</th>
+              <th class="p-2.5 text-cyan-600 dark:text-cyan-400 bg-cyan-50/70 dark:bg-cyan-950/20">MgSO₄</th>
+              <th class="p-2.5 text-orange-600 dark:text-orange-400 bg-orange-50/70 dark:bg-orange-950/20">Borax</th>
+              <th class="p-2.5 text-purple-600 dark:text-purple-400 bg-purple-50/70 dark:bg-purple-950/20">Zn-EDTA</th>
+              <th class="p-2.5 bg-slate-200/50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 font-normal text-[10px]">Nutrients Formed</th>
+            </tr>
+          </thead>
+          <tbody id="inputScheduleBody" class="divide-y divide-slate-200 dark:divide-slate-800 font-mono text-center">
+            <!-- 12 input rows generated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 2: 54-WEEK INTERACTIVE CHART -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-emerald-600"></i>
+            54-Week Soil Availability Dynamics (Remaining Nutrients)
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Active plant-available pools resulting from your fertilizer split schedule. Click filter buttons to focus on specific nutrient groups.
+          </p>
+        </div>
+
+        <!-- Filter Presets -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
+          <button id="filterAll" class="px-2.5 py-1 rounded-md bg-emerald-700 text-white shadow-sm transition">All Nutrients</button>
+          <button id="filterMacro" class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Primary (N,P,K)</button>
+          <button id="filterSec" class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Secondary (Ca,Mg,S)</button>
+          <button id="filterMicro" class="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Micro (B, Zn)</button>
+        </div>
+      </div>
+
+      <div class="chart-canvas-container">
+        <canvas id="availabilityChart"></canvas>
+      </div>
+    </section>
+
+    <!-- SECTION 3: 54-WEEK ACTIVE SOIL AVAILABILITY OUTPUTS (COLLAPSIBLE / SEARCHABLE) -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <details open class="group">
+        <summary class="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between cursor-pointer list-none">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+              <i class="fa-solid fa-table-cells"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                54-Week Active Soil Availability Results
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Calculated plant-available pool remaining in the soil for each week (Weeks 1 to 54) derived from fertilizer applications.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="btnExportCSV" type="button" class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+            <span class="text-xs text-emerald-700 dark:text-emerald-400 font-semibold group-open:rotate-180 transition-transform">
+              <i class="fa-solid fa-chevron-down text-sm"></i>
+            </span>
+          </div>
+        </summary>
+
+        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <table class="w-full text-left text-[11px] whitespace-nowrap">
+            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold border-b border-slate-200 dark:border-slate-700 z-10 text-center">
+              <tr>
+                <th class="p-2 border-r border-slate-200 dark:border-slate-700 sticky-col-week bg-slate-100 dark:bg-slate-800">Week</th>
+                <th class="p-2 text-red-600 dark:text-red-400 font-bold">Available N</th>
+                <th class="p-2 text-green-600 dark:text-green-400 font-bold">Available P₂O₅</th>
+                <th class="p-2 text-blue-600 dark:text-blue-400 font-bold">Available K₂O</th>
+                <th class="p-2 text-sky-600 dark:text-sky-400 font-bold">Available Ca</th>
+                <th class="p-2 text-cyan-600 dark:text-cyan-400 font-bold">Available Mg</th>
+                <th class="p-2 text-amber-600 dark:text-amber-400 font-bold">Available S</th>
+                <th class="p-2 text-orange-600 dark:text-orange-400 font-bold">Available B</th>
+                <th class="p-2 text-purple-600 dark:text-purple-400 font-bold">Available Zn</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 font-mono text-center">
+              <!-- 54 output rows populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- SECTION 4: FERTILIZER FORMULATION & NUTRIENT CONTENTS REFERENCE (COLLAPSIBLE) -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+      <details class="group">
+        <summary class="flex items-center justify-between cursor-pointer list-none">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-flask-vial"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white">Fertilizer Conversion Factors &amp; Depletion Trajectories</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Click to expand chemical conversion formulas and multi-source nutrient balances.</p>
+            </div>
+          </div>
+          <span class="text-xs text-emerald-700 dark:text-emerald-400 font-semibold group-open:rotate-180 transition-transform">
+            <i class="fa-solid fa-chevron-down text-sm"></i>
+          </span>
+        </summary>
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 mt-3 text-xs space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Conversion Rules Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border border-slate-200 dark:border-slate-800 rounded-lg">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                  <tr><th class="p-2">Applied Fertilizer</th><th class="p-2">Elemental Nutrient Grade</th><th class="p-2">Conversion Formula</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-mono text-[11px]">
+                  <tr><td class="p-1.5 font-bold text-red-600">UREA</td><td>46% N</td><td>N = UREA × 0.46</td></tr>
+                  <tr><td class="p-1.5 font-bold text-green-600">SSP</td><td>16% P₂O₅, 19% Ca, 11% S</td><td>P₂O₅ = SSP × 0.16</td></tr>
+                  <tr><td class="p-1.5 font-bold text-blue-600">MOP</td><td>60% K₂O</td><td>K₂O = MOP × 0.60</td></tr>
+                  <tr><td class="p-1.5 font-bold text-sky-600">Gypsum</td><td>20% Ca, 16% S</td><td>Ca = (SSP × 0.19) + (Gypsum × 0.20)</td></tr>
+                  <tr><td class="p-1.5 font-bold text-cyan-600">MgSO₄</td><td>9.6% Mg, 12% S</td><td>Mg = MgSO₄ × 0.096</td></tr>
+                  <tr><td class="p-1.5 font-bold text-amber-600">Multi-S</td><td>Gypsum + SSP + MgSO₄</td><td>S = (SSP × 0.11) + (Gypsum × 0.16) + (MgSO₄ × 0.12)</td></tr>
+                  <tr><td class="p-1.5 font-bold text-orange-600">Borax</td><td>11% B</td><td>B = Borax × 0.11</td></tr>
+                  <tr><td class="p-1.5 font-bold text-purple-600">Zn-EDTA</td><td>12% Zn (Chelated)</td><td>Zn = Zn-EDTA × 0.12</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Decay Trajectories -->
+            <div class="space-y-2 text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+              <h4 class="font-bold text-slate-900 dark:text-white text-xs">Soil Depletion Trajectories in Sand:</h4>
+              <p>• <strong class="text-red-600">Nitrogen (Urea):</strong> 6-week horizon [100%, 85%, 70%, 50%, 25%, 10%, 0%]. Rapid leaching as NO₃⁻.</p>
+              <p>• <strong class="text-green-600">Phosphorus (SSP):</strong> 12-week horizon [100%, 96%, 92%, 86%, 80%, 74%, 68%, 58%, 48%, 35%, 22%, 10%, 0%].</p>
+              <p>• <strong class="text-blue-600">Potassium (MOP):</strong> 10-week horizon [100%, 92%, 84%, 74%, 62%, 52%, 42%, 30%, 20%, 10%, 0%].</p>
+              <p>• <strong class="text-sky-600">Calcium (SSP + Gypsum):</strong> 20-week horizon. Divalent cation with moderate retention.</p>
+              <p>• <strong class="text-cyan-600">Magnesium (MgSO₄):</strong> 16-week horizon. High solubility in sand; displaced by Al/Ca.</p>
+              <p>• <strong class="text-amber-600">Sulfur (SSP + Gypsum + MgSO₄):</strong> 7-week horizon. Rapid leaching as sulfate anion.</p>
+              <p>• <strong class="text-orange-600">Boron (Borax):</strong> 6-week horizon. Moves freely as uncharged boric acid.</p>
+              <p>• <strong class="text-purple-600">Zinc (Zn-EDTA):</strong> 18-week horizon. Chelate ring prevents fixation, providing steady root availability.</p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 text-xs text-slate-500 dark:text-slate-400 no-print">
+    <div class="max-w-[96rem] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-leaf text-emerald-600"></i>
+        <span>AgroSoil Analytics • Fertilizer-Based 12-Split 54-Week Nutrient Availability Engine</span>
+      </div>
+      <div>
+        <span>Self-contained HTML5 / Chart.js / Tailwind CSS</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script Logic -->
+  <script>
+    // Theme Manager
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlEl.classList.add('dark');
+    } else {
+      htmlEl.classList.remove('dark');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      htmlEl.classList.toggle('dark');
+      localStorage.theme = htmlEl.classList.contains('dark') ? 'dark' : 'light';
+      updateChartTheme();
+    });
+
+    // Depletion decay vectors for all 8 nutrients (age 0 to max weeks)
+    const decayN  = [1.00, 0.85, 0.70, 0.50, 0.25, 0.10, 0.00];
+    const decayP  = [1.00, 0.96, 0.92, 0.86, 0.80, 0.74, 0.68, 0.58, 0.48, 0.35, 0.22, 0.10, 0.00];
+    const decayK  = [1.00, 0.92, 0.84, 0.74, 0.62, 0.52, 0.42, 0.30, 0.20, 0.10, 0.00];
+    const decayCa = [1.00, 0.98, 0.96, 0.94, 0.91, 0.88, 0.85, 0.80, 0.76, 0.72, 0.68, 0.63, 0.58, 0.53, 0.48, 0.42, 0.36, 0.28, 0.20, 0.10, 0.00];
+    const decayMg = [1.00, 0.96, 0.92, 0.88, 0.82, 0.76, 0.70, 0.63, 0.56, 0.49, 0.42, 0.35, 0.28, 0.21, 0.14, 0.07, 0.00];
+    const decayS  = [1.00, 0.86, 0.72, 0.54, 0.35, 0.22, 0.12, 0.00];
+    const decayB  = [1.00, 0.85, 0.68, 0.48, 0.24, 0.10, 0.00];
+    const decayZn = [1.00, 0.97, 0.93, 0.89, 0.84, 0.79, 0.74, 0.68, 0.62, 0.56, 0.50, 0.43, 0.36, 0.30, 0.24, 0.18, 0.12, 0.06, 0.00];
+
+    const NUM_WEEKS = 54;
+    const NUM_SLOTS = 12;
+
+    const fertilizers = ['urea', 'ssp', 'mop', 'gypsum', 'mgso4', 'borax', 'zn_edta'];
+    const nutrients = ['N', 'P', 'K', 'Ca', 'Mg', 'S', 'B', 'Zn'];
+    
+    // 12 Input rows: { week: 1..54, urea, ssp, mop, gypsum, mgso4, borax, zn_edta }
+    let inputSlots = Array.from({length: NUM_SLOTS}, () => ({
+      week: '',
+      urea: 0, ssp: 0, mop: 0, gypsum: 0, mgso4: 0, borax: 0, zn_edta: 0
+    }));
+
+    // Aggregated 54-week nutrient delivery and availability stores
+    const appliedTimeline = {
+      N: new Array(NUM_WEEKS).fill(0),
+      P: new Array(NUM_WEEKS).fill(0),
+      K: new Array(NUM_WEEKS).fill(0),
+      Ca: new Array(NUM_WEEKS).fill(0),
+      Mg: new Array(NUM_WEEKS).fill(0),
+      S: new Array(NUM_WEEKS).fill(0),
+      B: new Array(NUM_WEEKS).fill(0),
+      Zn: new Array(NUM_WEEKS).fill(0)
+    };
+
+    const availTimeline = {
+      N: new Array(NUM_WEEKS).fill(0),
+      P: new Array(NUM_WEEKS).fill(0),
+      K: new Array(NUM_WEEKS).fill(0),
+      Ca: new Array(NUM_WEEKS).fill(0),
+      Mg: new Array(NUM_WEEKS).fill(0),
+      S: new Array(NUM_WEEKS).fill(0),
+      B: new Array(NUM_WEEKS).fill(0),
+      Zn: new Array(NUM_WEEKS).fill(0)
+    };
+
+    const decayMap = {
+      N: decayN,
+      P: decayP,
+      K: decayK,
+      Ca: decayCa,
+      Mg: decayMg,
+      S: decayS,
+      B: decayB,
+      Zn: decayZn
+    };
+
+    function calculateSuperposition() {
+      // 1. Reset timeline
+      for (const nut of nutrients) {
+        appliedTimeline[nut].fill(0);
+        availTimeline[nut].fill(0);
+      }
+
+      // 2. Convert commercial fertilizers into elemental delivered nutrients for each week:
+      // - Urea: 46% N
+      // - SSP: 16% P2O5, 19% Ca, 11% S
+      // - MOP: 60% K2O
+      // - Gypsum: 20% Ca, 16% S
+      // - MgSO4: 9.6% Mg, 12% S
+      // - Borax: 11% B
+      // - Zn-EDTA: 12% Zn
+      for (const slot of inputSlots) {
+        const wk = parseInt(slot.week);
+        if (!isNaN(wk) && wk >= 1 && wk <= NUM_WEEKS) {
+          const idx = wk - 1;
+
+          const u = parseFloat(slot.urea) || 0;
+          const ssp = parseFloat(slot.ssp) || 0;
+          const m = parseFloat(slot.mop) || 0;
+          const g = parseFloat(slot.gypsum) || 0;
+          const mg = parseFloat(slot.mgso4) || 0;
+          const bx = parseFloat(slot.borax) || 0;
+          const zn = parseFloat(slot.zn_edta) || 0;
+
+          // Nutrient delivery additions
+          appliedTimeline.N[idx]  += (u * 0.46);
+          appliedTimeline.P[idx]  += (ssp * 0.16);
+          appliedTimeline.K[idx]  += (m * 0.60);
+          appliedTimeline.Ca[idx] += (ssp * 0.19) + (g * 0.20);
+          appliedTimeline.Mg[idx] += (mg * 0.096);
+          appliedTimeline.S[idx]  += (ssp * 0.11) + (g * 0.16) + (mg * 0.12);
+          appliedTimeline.B[idx]  += (bx * 0.11);
+          appliedTimeline.Zn[idx] += (zn * 0.12);
+        }
+      }
+
+      // 3. Compute superposition over 54 weeks for each nutrient
+      for (const nut of nutrients) {
+        const decayVec = decayMap[nut];
+        for (let t = 0; t < NUM_WEEKS; t++) {
+          let sum = 0;
+          for (let i = 0; i < decayVec.length; i++) {
+            if (t - i >= 0) {
+              sum += appliedTimeline[nut][t - i] * decayVec[i];
+            }
+          }
+          availTimeline[nut][t] = Math.round(sum * 10) / 10;
+        }
+      }
+    }
+
+    // Render 12 Input Rows
+    function renderInputTable() {
+      const tbody = document.getElementById('inputScheduleBody');
+      let html = '';
+      for (let s = 0; s < NUM_SLOTS; s++) {
+        const slot = inputSlots[s];
+        
+        // Calculate delivered preview for this row
+        const u = parseFloat(slot.urea) || 0;
+        const ssp = parseFloat(slot.ssp) || 0;
+        const m = parseFloat(slot.mop) || 0;
+        const g = parseFloat(slot.gypsum) || 0;
+        const mg = parseFloat(slot.mgso4) || 0;
+        const bx = parseFloat(slot.borax) || 0;
+        const zn = parseFloat(slot.zn_edta) || 0;
+
+        const rowN = (u * 0.46).toFixed(1);
+        const rowP = (ssp * 0.16).toFixed(1);
+        const rowK = (m * 0.60).toFixed(1);
+        const rowCa = ((ssp * 0.19) + (g * 0.20)).toFixed(1);
+        const rowMg = (mg * 0.096).toFixed(1);
+        const rowS = ((ssp * 0.11) + (g * 0.16) + (mg * 0.12)).toFixed(1);
+
+        const hasValues = u || ssp || m || g || mg || bx || zn;
+        const previewText = hasValues 
+          ? `N:${rowN} | P:${rowP} | K:${rowK} | Ca:${rowCa} | S:${rowS}` 
+          : '—';
+
+        html += `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-2 font-bold text-slate-500 dark:text-slate-400">#${s + 1}</td>
+            <td class="p-1.5 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <input type="number" min="1" max="54" placeholder="Week #" value="${slot.week}" data-slot="${s}" data-field="week"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-800 rounded font-bold text-emerald-800 dark:text-emerald-300 focus:ring-1 focus:ring-emerald-500 outline-none text-center" />
+            </td>
+            <td class="p-1.5 bg-red-50/20 dark:bg-red-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.urea || ''}" data-slot="${s}" data-field="urea"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/50 rounded text-red-600 dark:text-red-400 font-semibold focus:ring-1 focus:ring-red-500 outline-none text-right" />
+            </td>
+            <td class="p-1.5 bg-green-50/20 dark:bg-green-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.ssp || ''}" data-slot="${s}" data-field="ssp"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-green-200 dark:border-green-900/50 rounded text-green-600 dark:text-green-400 font-semibold focus:ring-1 focus:ring-green-500 outline-none text-right" />
+            </td>
+            <td class="p-1.5 bg-blue-50/20 dark:bg-blue-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.mop || ''}" data-slot="${s}" data-field="mop"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900/50 rounded text-blue-600 dark:text-blue-400 font-semibold focus:ring-1 focus:ring-blue-500 outline-none text-right" />
+            </td>
+            <td class="p-1.5 bg-sky-50/20 dark:bg-sky-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.gypsum || ''}" data-slot="${s}" data-field="gypsum"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-sky-200 dark:border-sky-900/50 rounded text-sky-600 dark:text-sky-400 font-semibold focus:ring-1 focus:ring-sky-500 outline-none text-right" />
+            </td>
+            <td class="p-1.5 bg-cyan-50/20 dark:bg-cyan-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.mgso4 || ''}" data-slot="${s}" data-field="mgso4"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-cyan-200 dark:border-cyan-900/50 rounded text-cyan-600 dark:text-cyan-400 font-semibold focus:ring-1 focus:ring-cyan-500 outline-none text-right" />
+            </td>
+            <td class="p-1.5 bg-orange-50/20 dark:bg-orange-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.borax || ''}" data-slot="${s}" data-field="borax"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-900/50 rounded text-orange-600 dark:text-orange-400 font-semibold focus:ring-1 focus:ring-orange-500 outline-none text-right" />
+            </td>
+            <td class="p-1.5 bg-purple-50/20 dark:bg-purple-950/10">
+              <input type="number" min="0" step="any" placeholder="0" value="${slot.zn_edta || ''}" data-slot="${s}" data-field="zn_edta"
+                class="slot-input w-20 px-2 py-1 bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-900/50 rounded text-purple-600 dark:text-purple-400 font-semibold focus:ring-1 focus:ring-purple-500 outline-none text-right" />
+            </td>
+            <td class="p-1 text-slate-500 dark:text-slate-400 text-[10px] text-left px-2 font-mono" id="previewSlot_${s}">
+              ${previewText}
+            </td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = html;
+
+      document.querySelectorAll('.slot-input').forEach(input => {
+        input.addEventListener('input', onSlotInputChange);
+      });
+    }
+
+    function onSlotInputChange(e) {
+      const slotIdx = parseInt(e.target.dataset.slot);
+      const field = e.target.dataset.field;
+      const val = e.target.value;
+
+      if (field === 'week') {
+        inputSlots[slotIdx].week = val;
+      } else {
+        inputSlots[slotIdx][field] = parseFloat(val) || 0;
+      }
+
+      // Update row nutrient delivery preview
+      const s = slotIdx;
+      const slot = inputSlots[s];
+      const u = parseFloat(slot.urea) || 0;
+      const ssp = parseFloat(slot.ssp) || 0;
+      const m = parseFloat(slot.mop) || 0;
+      const g = parseFloat(slot.gypsum) || 0;
+      const mg = parseFloat(slot.mgso4) || 0;
+      const bx = parseFloat(slot.borax) || 0;
+      const zn = parseFloat(slot.zn_edta) || 0;
+
+      const rowN = (u * 0.46).toFixed(1);
+      const rowP = (ssp * 0.16).toFixed(1);
+      const rowK = (m * 0.60).toFixed(1);
+      const rowCa = ((ssp * 0.19) + (g * 0.20)).toFixed(1);
+      const rowS = ((ssp * 0.11) + (g * 0.16) + (mg * 0.12)).toFixed(1);
+
+      const hasValues = u || ssp || m || g || mg || bx || zn;
+      const previewEl = document.getElementById(`previewSlot_${s}`);
+      if (previewEl) {
+        previewEl.textContent = hasValues 
+          ? `N:${rowN} | P:${rowP} | K:${rowK} | Ca:${rowCa} | S:${rowS}` 
+          : '—';
+      }
+
+      recalculateAndRefresh();
+    }
+
+    // Render 54-week Output Results Table
+    function renderResultsTable() {
+      const tbody = document.getElementById('resultsTableBody');
+      let html = '';
+      for (let w = 0; w < NUM_WEEKS; w++) {
+        const weekNum = w + 1;
+        html += `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="p-1.5 font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-700 sticky-col-week bg-white dark:bg-slate-900">W${weekNum}</td>
+            <td class="p-1.5 font-bold text-red-600 dark:text-red-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resN_${w}">${availTimeline.N[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-green-600 dark:text-green-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resP_${w}">${availTimeline.P[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-blue-600 dark:text-blue-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resK_${w}">${availTimeline.K[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-sky-600 dark:text-sky-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resCa_${w}">${availTimeline.Ca[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-cyan-600 dark:text-cyan-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resMg_${w}">${availTimeline.Mg[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-amber-600 dark:text-amber-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resS_${w}">${availTimeline.S[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-orange-600 dark:text-orange-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resB_${w}">${availTimeline.B[w].toFixed(1)}</td>
+            <td class="p-1.5 font-bold text-purple-600 dark:text-purple-400 text-right bg-slate-50/50 dark:bg-slate-850/40" id="resZn_${w}">${availTimeline.Zn[w].toFixed(1)}</td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = html;
+    }
+
+    function recalculateAndRefresh() {
+      calculateSuperposition();
+
+      // Update 54-week table cells
+      for (let w = 0; w < NUM_WEEKS; w++) {
+        for (const nut of nutrients) {
+          const el = document.getElementById(`res${nut}_${w}`);
+          if (el) el.textContent = availTimeline[nut][w].toFixed(1);
+        }
+      }
+
+      // Update Fertilizer Total KPIs
+      let totUrea = 0, totSSP = 0, totMOP = 0, totGypsum = 0, totMgSO4 = 0, totBorax = 0, totZnEDTA = 0;
+      for (const s of inputSlots) {
+        totUrea += parseFloat(s.urea) || 0;
+        totSSP += parseFloat(s.ssp) || 0;
+        totMOP += parseFloat(s.mop) || 0;
+        totGypsum += parseFloat(s.gypsum) || 0;
+        totMgSO4 += parseFloat(s.mgso4) || 0;
+        totBorax += parseFloat(s.borax) || 0;
+        totZnEDTA += parseFloat(s.zn_edta) || 0;
+      }
+
+      document.getElementById('kpiFertUrea').textContent = totUrea.toFixed(0);
+      document.getElementById('kpiFertSSP').textContent = totSSP.toFixed(0);
+      document.getElementById('kpiFertMOP').textContent = totMOP.toFixed(0);
+      document.getElementById('kpiFertGypsum').textContent = totGypsum.toFixed(0);
+      document.getElementById('kpiFertMgSO4').textContent = totMgSO4.toFixed(0);
+      document.getElementById('kpiFertBorax').textContent = totBorax.toFixed(1);
+      document.getElementById('kpiFertZnEDTA').textContent = totZnEDTA.toFixed(1);
+
+      // Update Elemental Delivered KPIs
+      for (const nut of nutrients) {
+        const tot = appliedTimeline[nut].reduce((a, b) => a + b, 0);
+        document.getElementById(`kpiDelivered${nut}`).textContent = tot.toFixed(1);
+      }
+
+      // Update Chart
+      if (chartInstance) {
+        for (let i = 0; i < nutrients.length; i++) {
+          const nut = nutrients[i];
+          chartInstance.data.datasets[i].data = availTimeline[nut];
+        }
+        chartInstance.update();
+      }
+    }
+
+    // Demo Schedule in Fertilizer Formulation Format
+    function loadDemoSchedule() {
+      inputSlots = Array.from({length: NUM_SLOTS}, () => ({
+        week: '', urea: 0, ssp: 0, mop: 0, gypsum: 0, mgso4: 0, borax: 0, zn_edta: 0
+      }));
+
+      // Slot 1: Week 1 (Pre-plant / Early basal dressing)
+      // Urea 220g (101g N), SSP 375g (60g P, 71g Ca, 41g S), MOP 135g (81g K), Gypsum 250g (50g Ca, 40g S), MgSO4 400g (38g Mg, 48g S), Borax 15g (1.6g B), Zn-EDTA 40g (4.8g Zn)
+      inputSlots[0] = { week: '1', urea: 220, ssp: 375, mop: 135, gypsum: 250, mgso4: 400, borax: 15, zn_edta: 40 };
+
+      // Slot 2: Week 4 (Early vegetative boost)
+      inputSlots[1] = { week: '4', urea: 110, ssp: 160, mop: 70, gypsum: 0, mgso4: 100, borax: 5, zn_edta: 0 };
+
+      // Slot 3: Week 8 (Peak flowering / fruit set)
+      inputSlots[2] = { week: '8', urea: 130, ssp: 0, mop: 100, gypsum: 250, mgso4: 250, borax: 0, zn_edta: 20 };
+
+      // Slot 4: Week 14 (Mid-season maintenance)
+      inputSlots[3] = { week: '14', urea: 110, ssp: 125, mop: 85, gypsum: 0, mgso4: 125, borax: 5, zn_edta: 0 };
+
+      // Slot 5: Week 22 (Late sizing)
+      inputSlots[4] = { week: '22', urea: 90, ssp: 0, mop: 100, gypsum: 150, mgso4: 0, borax: 0, zn_edta: 0 };
+
+      // Slot 6: Week 32 (Post-harvest reserve replenishment)
+      inputSlots[5] = { week: '32', urea: 65, ssp: 100, mop: 50, gypsum: 100, mgso4: 150, borax: 0, zn_edta: 15 };
+
+      renderInputTable();
+      recalculateAndRefresh();
+    }
+
+    function clearAllSchedule() {
+      inputSlots = Array.from({length: NUM_SLOTS}, () => ({
+        week: '', urea: 0, ssp: 0, mop: 0, gypsum: 0, mgso4: 0, borax: 0, zn_edta: 0
+      }));
+      renderInputTable();
+      recalculateAndRefresh();
+    }
+
+    // Chart.js Setup
+    let chartInstance;
+    const weekLabels = Array.from({length: NUM_WEEKS}, (_, i) => `W${i + 1}`);
+
+    function getChartOptions() {
+      const isDark = htmlEl.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+      const textColor = isDark ? '#94a3b8' : '#64748b';
+
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              boxWidth: 12,
+              padding: 10,
+              font: { family: 'Inter', size: 10.5, weight: '600' },
+              color: isDark ? '#e2e8f0' : '#1e293b'
+            }
+          },
+          tooltip: {
+            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            titleColor: isDark ? '#f8fafc' : '#0f172a',
+            bodyColor: isDark ? '#cbd5e1' : '#334155',
+            borderColor: isDark ? '#334155' : '#cbd5e1',
+            borderWidth: 1,
+            callbacks: {
+              label: function(ctx) {
+                return ` ${ctx.dataset.label}: ${ctx.parsed.y} active units`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: gridColor },
+            ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 20 },
+            title: { display: true, text: 'Season Timeline (Weeks 1 to 54)', color: textColor, font: { family: 'Inter', size: 11, weight: '600' } }
+          },
+          y: {
+            min: 0,
+            grid: { color: gridColor },
+            ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } },
+            title: { display: true, text: 'Active Bioavailable Units in Root Zone', color: textColor, font: { family: 'Inter', size: 11, weight: '600' } }
+          }
+        }
+      };
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('availabilityChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: weekLabels,
+          datasets: [
+            { label: 'N (Urea)', data: availTimeline.N, borderColor: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'P₂O₅ (SSP)', data: availTimeline.P, borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'K₂O (MOP)', data: availTimeline.K, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'Ca (SSP+Gypsum)', data: availTimeline.Ca, borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'Mg (MgSO₄)', data: availTimeline.Mg, borderColor: '#06b6d4', backgroundColor: 'rgba(6, 182, 212, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'S (Gypsum+SSP+MgSO₄)', data: availTimeline.S, borderColor: '#d97706', backgroundColor: 'rgba(217, 119, 6, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'Boron (Borax)', data: availTimeline.B, borderColor: '#ea580c', backgroundColor: 'rgba(234, 88, 12, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 },
+            { label: 'Zinc (Zn-EDTA)', data: availTimeline.Zn, borderColor: '#9333ea', backgroundColor: 'rgba(147, 51, 234, 0.08)', borderWidth: 2, tension: 0.25, pointRadius: 1 }
+          ]
+        },
+        options: getChartOptions()
+      });
+    }
+
+    function updateChartTheme() {
+      if (!chartInstance) return;
+      chartInstance.options = getChartOptions();
+      chartInstance.update();
+    }
+
+    function setChartFilter(mode) {
+      const datasets = chartInstance.data.datasets;
+      datasets.forEach((ds, idx) => {
+        if (mode === 'all') {
+          chartInstance.show(idx);
+        } else if (mode === 'macro') {
+          idx <= 2 ? chartInstance.show(idx) : chartInstance.hide(idx);
+        } else if (mode === 'sec') {
+          (idx >= 3 && idx <= 5) ? chartInstance.show(idx) : chartInstance.hide(idx);
+        } else if (mode === 'micro') {
+          idx >= 6 ? chartInstance.show(idx) : chartInstance.hide(idx);
+        }
+      });
+
+      ['filterAll', 'filterMacro', 'filterSec', 'filterMicro'].forEach(id => {
+        const btn = document.getElementById(id);
+        btn.className = "px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition";
+      });
+      const activeBtnId = mode === 'all' ? 'filterAll' : mode === 'macro' ? 'filterMacro' : mode === 'sec' ? 'filterSec' : 'filterMicro';
+      document.getElementById(activeBtnId).className = "px-2.5 py-1 rounded-md bg-emerald-700 text-white shadow-sm transition";
+    }
+
+    function exportToCSV() {
+      let csv = "Week,Avail_N_from_Urea,Avail_P2O5_from_SSP,Avail_K2O_from_MOP,Avail_Ca_from_SSP_Gypsum,Avail_Mg_from_MgSO4,Avail_S_from_Gypsum_SSP_MgSO4,Avail_B_from_Borax,Avail_Zn_from_ZnEDTA\n";
+      for (let w = 0; w < NUM_WEEKS; w++) {
+        csv += `${w+1},${availTimeline.N[w]},${availTimeline.P[w]},${availTimeline.K[w]},${availTimeline.Ca[w]},${availTimeline.Mg[w]},${availTimeline.S[w]},${availTimeline.B[w]},${availTimeline.Zn[w]}\n`;
+      }
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "54_Week_Fertilizer_Driven_Soil_Availability.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    document.getElementById('btnLoadDemo').addEventListener('click', loadDemoSchedule);
+    document.getElementById('btnClearAll').addEventListener('click', clearAllSchedule);
+    document.getElementById('btnExportCSV').addEventListener('click', exportToCSV);
+
+    document.getElementById('filterAll').addEventListener('click', () => setChartFilter('all'));
+    document.getElementById('filterMacro').addEventListener('click', () => setChartFilter('macro'));
+    document.getElementById('filterSec').addEventListener('click', () => setChartFilter('sec'));
+    document.getElementById('filterMicro').addEventListener('click', () => setChartFilter('micro'));
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      renderResultsTable();
+      loadDemoSchedule();
+    });
+  </script>
+</body>
+</html>
+
